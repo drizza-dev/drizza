@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Status of the Drizza MCP integration and where its setup instructions will live.">
+  <meta name="description" content="Register the local Drizza MCP endpoint in Claude Code and Codex, run the briefing skill, and manage the local token.">
   <meta name="theme-color" content="#f4f3ed">
-  <title>MCP integration · Drizza Docs</title>
+  <title>Connect your agent over MCP · Drizza Docs</title>
   <link rel="canonical" href="https://docs.drizza.dev/guide/mcp/">
   <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/mcp/">
   <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/mcp/">
@@ -33,21 +33,126 @@
   </div>
 </header>
 <main id="main" class="page-main wrap">
-  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Guides</span><span aria-hidden="true">/</span><span aria-current="page">MCP integration</span></nav>
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Guides</span><span aria-hidden="true">/</span><span aria-current="page">Connect your agent</span></nav>
   <div class="guide-layout">
     <nav class="guide-nav" aria-label="Guides">
   <p class="eyebrow">Guides</p>
   <a href="/guide/run-locally/">Run locally</a> <a href="/guide/accounts/">Accounts</a> <a href="/guide/github/">GitHub</a> <a href="/guide/mcp/" aria-current="page">MCP</a> <a href="/guide/contributing/">Contributing</a>
 </nav>
     <article class="prose">
-      <header class="guide-intro"><p class="eyebrow">Open-source guide</p><h1>MCP integration</h1><p>The local MCP integration is not available yet.</p></header>
-      <div class="warning-box"><p><strong>Coming soon.</strong> The Drizza MCP integration is still being built. There are no endpoint details or agent-registration commands to follow yet.</p></div>
+      <header class="guide-intro"><p class="eyebrow">Open-source guide</p><h1>Connect your agent over MCP</h1><p>Register the local Drizza MCP endpoint in Claude Code or Codex, and let your agent push the daily briefing to the dashboard.</p></header>
+      <h2 id="how-it-works">How it works</h2>
+<p>Drizza never calls a model. Your own agent (Claude Code or Codex) reads your day with the access it already has, writes the briefing, and pushes it to Drizza through a local MCP endpoint. The <strong>Briefing de hoje</strong> card updates by itself a few seconds after the push.</p>
+<ul>
+  <li>The endpoint is <code class="inline-code">http://127.0.0.1:4340/mcp</code>, on the same loopback server as the dashboard. It follows the port you pass with <code class="inline-code">--port</code>.</li>
+  <li>It speaks MCP over Streamable HTTP: every message is a <code class="inline-code">POST</code> to <code class="inline-code">/mcp</code>. <code class="inline-code">GET</code> and other methods get <code class="inline-code">405</code>.</li>
+  <li>Every request needs the local token as a Bearer token in the <code class="inline-code">Authorization</code> header.</li>
+</ul>
 
-<h2 id="planned-guide">What this guide will cover</h2>
-<p>When the integration is ready, this page will explain how to connect supported agents, what the local token can access, and how to rotate or revoke it. The plan is to keep the MCP token in a local file on your machine; its exact location and revocation steps will be published with the integration.</p>
+<h2 id="start">Start Drizza and load the token</h2>
+<p>Start Drizza as described in <a href="/guide/run-locally/">Run locally</a>:</p>
+<pre class="command-block"><code>node dist-node/cli/index.js</code></pre>
+<p>On the first start, Drizza creates a random token and stores it in <code class="inline-code">~/.drizza/mcp-token</code>, readable only by your user. The token file always sits next to the database, so with <code class="inline-code">--db &lt;path&gt;</code> it lives in the same directory as that database. Drizza never prints the token.</p>
+<p>After it starts, Drizza prints the endpoint, where the token is, and the registration commands for both agents. Those lines are in Brazilian Portuguese, and they carry the absolute path of your token file and the port in use. With the defaults, they match the commands on this page.</p>
+<p>In the shell that will open Claude Code or Codex, load the token into a variable:</p>
+<pre class="command-block"><code>export DRIZZA_MCP_TOKEN=$(cat ~/.drizza/mcp-token)</code></pre>
+<p>The agents keep only a reference to <code class="inline-code">DRIZZA_MCP_TOKEN</code> in their configuration and read its value when they connect. Export it in every shell that opens the agent, for example from your shell profile.</p>
+<div class="warning-box"><p><strong>Keep the token out of the command line.</strong> Do not register with <code class="inline-code">--header "Authorization: Bearer $(cat ...)"</code>. The token would show up in the process list and could be stored in plain text in the agent configuration.</p></div>
 
-<h2 id="until-then">Until then</h2>
-<p>Use the <a href="/guide/run-locally/">local setup guide</a> for the current installation details. Do not copy configuration snippets from an older Drizza build or another project.</p>
+<h2 id="claude-code">Register in Claude Code</h2>
+<pre class="command-block"><code>claude mcp add --transport http drizza http://127.0.0.1:4340/mcp --header 'Authorization: Bearer ${DRIZZA_MCP_TOKEN}'</code></pre>
+<p>Keep the single quotes: they make Claude Code store the reference <code class="inline-code">${DRIZZA_MCP_TOKEN}</code>, not the token. Claude Code reads the variable each time it connects.</p>
+<p>By default, <code class="inline-code">claude mcp add</code> registers the server only for the directory you run it in. To make Drizza available in every project, add <code class="inline-code">--scope user</code>:</p>
+<pre class="command-block"><code>claude mcp add --scope user --transport http drizza http://127.0.0.1:4340/mcp --header 'Authorization: Bearer ${DRIZZA_MCP_TOKEN}'</code></pre>
+<p>Check the connection with Drizza running:</p>
+<pre class="command-block"><code>claude mcp list</code></pre>
+<p>The <code class="inline-code">drizza</code> line should say <strong>Connected</strong>. The tools show up in Claude Code as <code class="inline-code">mcp__drizza__get_today</code>, <code class="inline-code">mcp__drizza__push_briefing</code> and <code class="inline-code">mcp__drizza__push_items</code>.</p>
+
+<h2 id="codex">Register in Codex</h2>
+<pre class="command-block"><code>codex mcp add drizza --url http://127.0.0.1:4340/mcp --bearer-token-env-var DRIZZA_MCP_TOKEN</code></pre>
+<p>Codex stores the server in <code class="inline-code">~/.codex/config.toml</code> with the name of the variable, not its value:</p>
+<pre class="command-block"><code>[mcp_servers.drizza]
+url = "http://127.0.0.1:4340/mcp"
+bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
+<p>Check the registration:</p>
+<pre class="command-block"><code>codex mcp get drizza</code></pre>
+<p>This shows the stored configuration; it does not test the connection.</p>
+<h3 id="codex-exec">Running Codex non-interactively</h3>
+<p>In <code class="inline-code">codex exec</code>, nobody is there to approve tool calls, so Codex blocks the calls to the Drizza tools and the briefing is not pushed. To allow them, add this line under <code class="inline-code">[mcp_servers.drizza]</code> in <code class="inline-code">~/.codex/config.toml</code>:</p>
+<pre class="command-block"><code>default_tools_approval_mode = "approve"</code></pre>
+<p>This approves every Drizza tool without asking, in interactive sessions too. Leave it out if you prefer to approve each call.</p>
+
+<h2 id="skill">Run the briefing skill</h2>
+<p>The repository ships a skill, <code class="inline-code">skills/drizza-briefing/SKILL.md</code>, that teaches both agents to build the briefing. It reads what Drizza already has with <code class="inline-code">get_today</code>, collects the day from sources the agent can already reach (GitHub through <code class="inline-code">gh</code>, plus Slack, Linear or others only if the agent already has a tool for them), and pushes the result with <code class="inline-code">push_briefing</code>. The agent never reads the token file or the database.</p>
+<p>From the root of your clone, copy the skill into each agent's skills folder:</p>
+<pre class="command-block"><code>mkdir -p ~/.claude/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.claude/skills/drizza-briefing/</code></pre>
+<pre class="command-block"><code>mkdir -p ~/.codex/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.codex/skills/drizza-briefing/</code></pre>
+<p>Then run it in Claude Code:</p>
+<pre class="command-block"><code>/drizza-briefing</code></pre>
+<p>Or in Codex:</p>
+<pre class="command-block"><code>$drizza-briefing</code></pre>
+<p>The <strong>Copiar comando do briefing</strong> button in the dashboard copies the Claude Code command. When the agent finishes, the briefing shows up in the <strong>Briefing de hoje</strong> card with links to its sources.</p>
+
+<h2 id="tools">Tools</h2>
+<p>The tools follow contract version <code class="inline-code">1</code>. Every call sends <code class="inline-code">"contract_version": "1"</code>. Inputs are closed: a field the contract does not define is rejected. Drizza reports its contract version in the <code class="inline-code">_meta</code> of the <code class="inline-code">initialize</code> (or <code class="inline-code">server/discover</code>) response, under <code class="inline-code">dev.drizza/contract_version</code>; a client should check it before sending a field from a newer contract. A call that fails validation returns a tool error with the path of each invalid field, so the agent can fix the payload and try again.</p>
+
+<h3 id="get-today">get_today</h3>
+<p>Reads what Drizza has for a day. Send only <code class="inline-code">contract_version</code> to read today, or add <code class="inline-code">date</code> as <code class="inline-code">YYYY-MM-DD</code>. Without <code class="inline-code">date</code>, today is the local date of the machine running Drizza, not UTC.</p>
+<pre class="command-block"><code>{ "contract_version": "1" }</code></pre>
+<p>It returns <code class="inline-code">date</code>, <code class="inline-code">briefing</code> (the stored briefing, or <code class="inline-code">null</code>) and <code class="inline-code">items</code>. <code class="inline-code">items</code> lists only what an agent pushed or enriched through <code class="inline-code">push_items</code> on that local day, newest first, up to 200. A GitHub sync alone never puts an item there.</p>
+
+<h3 id="push-briefing">push_briefing</h3>
+<p>Stores the briefing for one day. A second push for the same <code class="inline-code">date</code> replaces the previous one, and the response says so with <code class="inline-code">replaced</code>.</p>
+<ul>
+  <li><code class="inline-code">date</code> (<code class="inline-code">YYYY-MM-DD</code>), <code class="inline-code">agent</code> (1 to 64 characters), <code class="inline-code">headline</code> (1 to 200) and <code class="inline-code">sections</code> (1 to 12) are required.</li>
+  <li>Each section has a <code class="inline-code">title</code> (1 to 120 characters) and 1 to 30 <code class="inline-code">bullets</code>. Each bullet has a <code class="inline-code">text</code> (1 to 1000) and optional <code class="inline-code">links</code> (up to 10) and <code class="inline-code">item_refs</code> (up to 10).</li>
+  <li>A link has exactly <code class="inline-code">url</code>, <code class="inline-code">label</code> and <code class="inline-code">source</code> (<code class="inline-code">github</code>, <code class="inline-code">slack</code> or <code class="inline-code">other</code>). The URL must be an absolute <code class="inline-code">http://</code> or <code class="inline-code">https://</code> address without a username or password.</li>
+  <li>An <code class="inline-code">item_ref</code> points at an item by the same <code class="inline-code">source</code> and <code class="inline-code">external_id</code> used in <code class="inline-code">push_items</code>.</li>
+</ul>
+<p>It returns <code class="inline-code">briefing_id</code>, <code class="inline-code">date</code> and <code class="inline-code">replaced</code>.</p>
+
+<h3 id="push-items">push_items</h3>
+<p>Stores up to 100 items per call, such as threads or pull requests. Each item needs <code class="inline-code">source</code>, <code class="inline-code">kind</code>, <code class="inline-code">external_id</code> and <code class="inline-code">title</code>, and may carry <code class="inline-code">url</code>, <code class="inline-code">summary</code> and <code class="inline-code">updated_at</code> (an RFC 3339 timestamp).</p>
+<ul>
+  <li><strong>Upsert that merges.</strong> Items are matched by <code class="inline-code">source</code> and <code class="inline-code">external_id</code>. Pushing an existing key updates it, and an optional field you leave out keeps its stored value. Clearing a field is not supported yet.</li>
+  <li><strong>GitHub pull requests.</strong> Pull requests synced from GitHub use <code class="inline-code">source</code> <code class="inline-code">github</code> and <code class="inline-code">external_id</code> <code class="inline-code">owner/repo#number</code>, matched without regard to case. Pushing that key adds your <code class="inline-code">summary</code> to the synced pull request and keeps its title, URL, kind and update time as synced.</li>
+  <li><strong>Kept after the sync.</strong> If a pull request you enriched or pushed leaves the GitHub sync, Drizza keeps it as your item, with your summary.</li>
+  <li><strong>Safe URLs.</strong> A URL with a username or password is rejected, and stored URLs are normalized.</li>
+</ul>
+<p>It returns <code class="inline-code">inserted</code> and <code class="inline-code">updated</code>, which add up to the number of items you pushed.</p>
+
+<h2 id="token">Find, rotate, or revoke the token</h2>
+<p>The token is in <code class="inline-code">~/.drizza/mcp-token</code>, or next to the database you pass with <code class="inline-code">--db</code>. Drizza refuses to start if the file can be read by other users; fix it with <code class="inline-code">chmod 600</code> or delete it to get a new one.</p>
+<p>To rotate the token:</p>
+<ol>
+  <li>Stop Drizza.</li>
+  <li>Delete the token file:
+<pre class="command-block"><code>rm ~/.drizza/mcp-token</code></pre></li>
+  <li>Start Drizza again. It creates a new token, and the old one stops working.</li>
+  <li>Load the new token in the shell that opens the agent:
+<pre class="command-block"><code>export DRIZZA_MCP_TOKEN=$(cat ~/.drizza/mcp-token)</code></pre></li>
+  <li>Restart Claude Code or Codex from that shell. You do not need to register the server again, since the agents store only the variable name.</li>
+</ol>
+<p>Drizza reads the token file only when it starts, so the old token keeps working until Drizza restarts.</p>
+<p>To remove Drizza from an agent, unregister the server:</p>
+<pre class="command-block"><code>claude mcp remove drizza</code></pre>
+<pre class="command-block"><code>codex mcp remove drizza</code></pre>
+
+<h2 id="endpoint-security">Endpoint security</h2>
+<ul>
+  <li>The endpoint shares the dashboard server, which binds to <code class="inline-code">127.0.0.1</code> and rejects requests whose <code class="inline-code">Host</code> is not the local address.</li>
+  <li>The Bearer token is required on every request. Without it, or with a wrong one, Drizza answers <code class="inline-code">401</code>.</li>
+  <li>The <code class="inline-code">Origin</code> header is optional, because command-line MCP clients do not send it. When it is present and is not the local Drizza address, Drizza answers <code class="inline-code">403</code>, so a web page you open cannot call the endpoint from your browser.</li>
+  <li>The token is never written to the database, logs, API responses, or the dashboard.</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="unauthorized">The agent cannot connect (401)</h3>
+<p><code class="inline-code">claude mcp list</code> reports that the server rejected the <code class="inline-code">Authorization</code> header (HTTP 401), and may warn that <code class="inline-code">DRIZZA_MCP_TOKEN</code> is missing. Export the variable as shown above in the shell that opens the agent and restart it. If you rotated the token, export it again.</p>
+<h3 id="not-running">The tools are missing</h3>
+<p>Drizza must be running when the agent starts. Start Drizza, confirm the port matches the registered URL, and restart the agent. If you started Drizza with <code class="inline-code">--port</code>, register the URL it prints.</p>
+<h3 id="blocked">Codex does not push the briefing</h3>
+<p>In <code class="inline-code">codex exec</code>, add <code class="inline-code">default_tools_approval_mode = "approve"</code> as described in <a href="#codex-exec">Running Codex non-interactively</a>.</p>
       <nav class="page-actions" aria-label="Adjacent guides"><a href="/guide/github/">← GitHub</a><a href="/guide/contributing/">Contributing →</a></nav>
     </article>
   </div>

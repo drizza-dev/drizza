@@ -62,7 +62,7 @@
     <div class="card-grid"><a class="card" href="/pt/guide/run-locally/"><span class="card-label">01 · Instalação</span><h3>Rodar localmente</h3><p>Instale o Drizza, inicie o servidor local e encontre o banco de dados.</p><span class="card-arrow">Ler o guia →</span></a>
 <a class="card" href="/pt/guide/accounts/"><span class="card-label">02 · Privacidade</span><h3>Contas e dados</h3><p>Veja o que fica na sua máquina e se é preciso ter uma conta.</p><span class="card-arrow">Ler o guia →</span></a>
 <a class="card" href="/pt/guide/github/"><span class="card-label">03 · Fontes</span><h3>GitHub</h3><p>Conecte o GitHub com o gh ou com um token fine-grained e preencha os cards de PRs.</p><span class="card-arrow">Ler o guia →</span></a>
-<a class="card" href="/pt/guide/mcp/"><span class="card-label">04 · Agentes</span><h3>MCP</h3><p>Consulte o status atual da integração MCP local.</p><span class="card-arrow">Ler o guia →</span></a>
+<a class="card" href="/pt/guide/mcp/"><span class="card-label">04 · Agentes</span><h3>MCP</h3><p>Registre o endpoint MCP local no Claude Code ou no Codex e deixe seu agente enviar o briefing do dia.</p><span class="card-arrow">Ler o guia →</span></a>
 <a class="card" href="/pt/guide/contributing/"><span class="card-label">05 · Comunidade</span><h3>Contribuir</h3><p>Configure o repositório e prepare uma contribuição focada.</p><span class="card-arrow">Ler o guia →</span></a></div>
   </section>
 
@@ -72,15 +72,15 @@
       <div class="security-strip">
         <article class="security-item"><h3>Apenas loopback</h3><p>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, não na interface da rede.</p></article>
         <article class="security-item"><h3>Banco local</h3><p>Os dados SQLite ficam em <code class="inline-code">~/.drizza/drizza.db</code>.</p></article>
-        <article class="security-item"><h3>Tokens fora do banco</h3><p>O banco SQLite registra só a origem do token do GitHub (<code class="inline-code">gh</code> ou <code class="inline-code">env</code>), nunca o valor, e o token não aparece nos logs, nas respostas da API nem na interface. O arquivo local do token MCP e os passos para revogá-lo serão documentados quando o caminho for definido.</p></article>
+        <article class="security-item"><h3>Tokens fora do banco</h3><p>O banco SQLite registra só a origem do token do GitHub (<code class="inline-code">gh</code> ou <code class="inline-code">env</code>), nunca o valor, e o token não aparece nos logs, nas respostas da API nem na interface. O token MCP local fica num arquivo próprio, <code class="inline-code">~/.drizza/mcp-token</code>, legível só pelo seu usuário, e nunca é gravado no banco.</p></article>
       </div>
     </div>
   </section>
 
   <section class="section wrap" id="integrations">
-    <div class="section-heading"><div><p class="eyebrow">Integrações</p><h2>Conecte suas fontes.</h2></div><p>O GitHub já pode ser conectado. As demais integrações aparecem com o status atual, e os comandos e permissões de cada uma são publicados quando ela fica pronta.</p></div>
+    <div class="section-heading"><div><p class="eyebrow">Integrações</p><h2>Conecte suas fontes.</h2></div><p>O GitHub e o endpoint MCP para agentes já podem ser conectados. O Slack aparece com o status atual, e os comandos e permissões dele serão publicados quando estiver pronto.</p></div>
     <div class="card-grid"><a class="card" href="/pt/guide/github/"><span class="card-label">Disponível</span><h3>GitHub</h3><p>Conecte com o gh ou com um token fine-grained, veja a permissão mínima e os limites conhecidos.</p><span class="card-arrow">Ler o guia →</span></a>
-<article class="card coming-soon"><span class="card-label">Em breve</span><h3>MCP</h3><p>A configuração de agentes e a revogação do token local serão publicadas quando a integração MCP estiver pronta.</p></article>
+<a class="card" href="/pt/guide/mcp/"><span class="card-label">Disponível</span><h3>MCP</h3><p>Registre o Drizza no Claude Code ou no Codex, rode o skill de briefing e rotacione o token local.</p><span class="card-arrow">Ler o guia →</span></a>
 <article class="card coming-soon"><span class="card-label">Em breve</span><h3>Slack</h3><p>As instruções de conexão com o Slack serão publicadas com a integração.</p></article></div>
   </section>
 </main>
