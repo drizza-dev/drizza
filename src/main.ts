@@ -291,6 +291,7 @@ let startingGithubSync = false
 let pendingGithubRunId: string | null = null
 let githubRefreshGeneration = 0
 let githubRefreshTimer: number | null = null
+let githubPollFailures = 0
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -519,6 +520,7 @@ const loadGithubPrs = async (generation: number): Promise<void> => {
 
     githubData = payload
     githubLoadError = null
+    githubPollFailures = 0
     renderGithubState()
     finishPendingSyncAnnouncement()
 
@@ -529,7 +531,15 @@ const loadGithubPrs = async (generation: number): Promise<void> => {
     }
   } catch (error) {
     if (generation !== githubRefreshGeneration) return
-    githubLoadError = error instanceof Error ? error.message : 'Não foi possível ler as PRs.'
+    githubLoadError = 'O servidor local não respondeu.'
+    if (githubData?.lastSync?.status === 'running' && githubPollFailures < 5) {
+      githubPollFailures += 1
+      githubRefreshTimer = window.setTimeout(() => {
+        void loadGithubPrs(generation)
+      }, 1000 * 2 ** githubPollFailures)
+    } else if (githubData?.lastSync) {
+      githubData = { ...githubData, lastSync: { ...githubData.lastSync, status: 'error' } }
+    }
     renderGithubState()
   }
 }

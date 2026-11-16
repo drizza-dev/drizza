@@ -167,6 +167,7 @@ async function searchPullRequests(token: string, role: GithubPrRole): Promise<Gi
         "User-Agent": "drizza",
         "X-GitHub-Api-Version": "2022-11-28",
       },
+      redirect: "error",
       signal: AbortSignal.timeout(15000),
     });
   } catch {

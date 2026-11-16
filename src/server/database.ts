@@ -137,10 +137,24 @@ export function getGithubPrs(database: DatabaseSync): { reviews: GithubPr[]; aut
   return { reviews: readRole("review"), authored: readRole("authored") };
 }
 
+const staleRunMs = 5 * 60 * 1000;
+
 export function startSyncRun(database: DatabaseSync, id: string, startedAt: string): boolean {
   database.exec("BEGIN IMMEDIATE");
 
   try {
+    database
+      .prepare(
+        `UPDATE sync_runs
+         SET status = 'error', finished_at = ?, error = ?
+         WHERE status = 'running' AND started_at < ?`,
+      )
+      .run(
+        startedAt,
+        "Execução anterior interrompida antes da conclusão.",
+        new Date(Date.parse(startedAt) - staleRunMs).toISOString(),
+      );
+
     const activeRun = database
       .prepare("SELECT 1 AS running FROM sync_runs WHERE status = 'running' LIMIT 1")
       .get() as RunningRow | undefined;
