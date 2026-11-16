@@ -26,7 +26,7 @@
   color-scheme: light;
   --background: #f4f3ed;
   --ink: #17241e;
-  --muted: #79827c;
+  --muted: #646b66;
   --line: #e2e4dd;
   --line-soft: #eceee8;
   --paper: #fbfbf7;
@@ -54,7 +54,7 @@
   --review-surface: #e7efe8;
   --progress-ink: #9a5e36;
   --progress-surface: #f7eadf;
-  --empty-ink: #7c877f;
+  --empty-ink: #626b65;
   --empty-icon: #147a52;
   --source-ink: #36443b;
   --source-surface: #e9ece6;
@@ -221,7 +221,7 @@ a:focus-visible {
 }
 
 .app-shell {
-  width: var(--dashboard-width);
+  width: max(var(--dashboard-width), min(100%, 640px));
   padding-inline: clamp(16px, 2vw, 32px);
   margin: 0 auto;
   container-type: inline-size;
@@ -298,7 +298,7 @@ a:focus-visible {
   border-radius: 999px;
   color: var(--ink);
   background: var(--paper);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -370,7 +370,7 @@ a:focus-visible {
 .eyebrow {
   margin: 0 0 11px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .16em;
   line-height: 1.4;
@@ -502,7 +502,7 @@ a:focus-visible {
 
 .quiet-label {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -531,7 +531,7 @@ a:focus-visible {
 .briefing-kicker {
   margin: 0 0 10px;
   color: var(--hero-accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -763,13 +763,13 @@ a:focus-visible {
 .source-brand {
   width: 24px;
   height: 24px;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .github-brand {
   color: var(--source-ink);
   background: var(--source-surface);
-  font-size: 8px;
+  font-size: 12px;
 }
 
 .source-name {
@@ -780,7 +780,7 @@ a:focus-visible {
 .source-status {
   margin-left: auto;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .source-note {
@@ -796,7 +796,7 @@ a:focus-visible {
   gap: 16px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .footer span:first-child {
@@ -840,7 +840,7 @@ a:focus-visible {
   }
 
   .local-state {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .theme-family-picker select {
@@ -933,13 +933,13 @@ a:focus-visible {
   .theme-family-picker select {
     padding-right: 26px;
     padding-left: 9px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .layout-width-picker select {
     padding-right: 23px;
     padding-left: 8px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .theme-family-picker::after,
@@ -1046,7 +1046,7 @@ a:focus-visible {
     min-height: 32px;
     margin-top: auto;
     padding: 0 8px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .lower-grid {
@@ -1096,10 +1096,16 @@ a:focus-visible {
   }
 
   .topbar {
+    height: auto;
+    min-height: 58px;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
     gap: 8px;
+    padding-block: 10px;
   }
 
   .theme-controls {
+    flex-wrap: wrap;
     gap: 4px;
   }
 
@@ -1108,7 +1114,7 @@ a:focus-visible {
     min-height: 32px;
     padding-right: 24px;
     padding-left: 8px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .theme-family-picker::after,
@@ -1130,7 +1136,7 @@ a:focus-visible {
   }
 
   .action-note {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .briefing-card {
@@ -1142,11 +1148,11 @@ a:focus-visible {
   }
 
   .briefing-copy > p:last-child {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .briefing-meta {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .work-grid {
@@ -1166,11 +1172,11 @@ a:focus-visible {
     width: 22px;
     height: 22px;
     flex: 0 0 auto;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .quiet-label {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .work-card h2 {
@@ -1180,7 +1186,7 @@ a:focus-visible {
 
   .card-description {
     min-height: 26px;
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.25;
   }
 
@@ -1188,7 +1194,7 @@ a:focus-visible {
     min-height: 32px;
     padding: 0 5px;
     gap: 5px;
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .panel {
@@ -1202,7 +1208,7 @@ a:focus-visible {
   .source-row {
     min-height: 24px;
     gap: 6px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .compact-heading {
@@ -1215,13 +1221,20 @@ a:focus-visible {
   }
 
   .source-status {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .timeline-empty strong,
   .timeline-empty p,
   .source-note {
-    font-size: 10px;
+    font-size: 12px;
+  }
+}
+
+@media (pointer: coarse) {
+  .theme-family-picker select,
+  .layout-width-picker select {
+    font-size: 16px;
   }
 }
 
