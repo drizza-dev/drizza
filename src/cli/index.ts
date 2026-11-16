@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import type { Server } from "node:http";
@@ -6,6 +7,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { createDrizzaServer } from "../server/server.js";
 import { openDatabase } from "../server/database.js";
+import { ensureMcpToken, mcpTokenPath } from "../server/mcp-token.js";
 
 const defaultPort = 4340;
 const usage = "Uso: drizza [--port <porta>] [--db <caminho>]";
@@ -60,6 +62,30 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function packageVersion(): string {
+  const manifest = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
+    version?: unknown;
+  };
+  return typeof manifest.version === "string" ? manifest.version : "0.0.0";
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function printMcpSetup(port: number, tokenPath: string): void {
+  const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+  const readToken = `$(cat ${shellQuote(tokenPath)})`;
+
+  console.log(`MCP local: ${mcpUrl}`);
+  console.log(`Token do MCP: guardado em ${tokenPath} (não é exibido aqui)`);
+  console.log("Para registrar no Claude Code:");
+  console.log(`  claude mcp add --transport http drizza ${mcpUrl} --header "Authorization: Bearer ${readToken}"`);
+  console.log("Para registrar no Codex (a variável precisa existir no shell que abre o Codex):");
+  console.log(`  export DRIZZA_MCP_TOKEN="${readToken}"`);
+  console.log(`  codex mcp add drizza --url ${mcpUrl} --bearer-token-env-var DRIZZA_MCP_TOKEN`);
+}
+
 function closeResources(server: Server, closeDatabase: () => void): void {
   server.close(() => closeDatabase());
 }
@@ -86,10 +112,12 @@ function main(): void {
 
   try {
     database = openDatabase(options.databasePath);
+    const tokenPath = mcpTokenPath(options.databasePath);
     const server = createDrizzaServer({
       database,
       distDirectory: fileURLToPath(new URL("../../dist/", import.meta.url)),
       port: options.port,
+      mcp: { token: ensureMcpToken(tokenPath), serverVersion: packageVersion() },
     });
 
     server.on("error", (error: NodeJS.ErrnoException) => {
@@ -106,6 +134,7 @@ function main(): void {
     server.listen(options.port, "127.0.0.1", () => {
       console.log(`Drizza disponível em http://127.0.0.1:${options.port}`);
       console.log(`Banco SQLite: ${options.databasePath}`);
+      printMcpSetup(options.port, tokenPath);
       process.once("SIGINT", () => closeResources(server, closeDatabase));
       process.once("SIGTERM", () => closeResources(server, closeDatabase));
     });

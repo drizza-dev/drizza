@@ -7,6 +7,7 @@
     "lib": ["ES2023"],
     "types": ["node"],
     "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
     "noEmit": false,
     "outDir": "dist-node",
     "rootDir": "src"

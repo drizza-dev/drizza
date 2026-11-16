@@ -1,0 +1,124 @@
+{
+  "contract_version": "1",
+  "tools": [
+    {
+      "name": "push_briefing",
+      "title": "Push briefing",
+      "description": "Store the briefing for one day in drizza. A second push for the same date replaces the previous one.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "Day the briefing belongs to, as YYYY-MM-DD."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "bullets": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "links": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["contract_version", "date", "sections"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "briefing_id": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "replaced": {
+            "type": "boolean"
+          }
+        },
+        "required": ["briefing_id", "date", "replaced"]
+      }
+    },
+    {
+      "name": "push_items",
+      "title": "Push items",
+      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "external_id": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                }
+              },
+              "required": ["source", "external_id"]
+            }
+          }
+        },
+        "required": ["contract_version", "items"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "inserted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updated": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["inserted", "updated"]
+      }
+    },
+    {
+      "name": "get_today",
+      "title": "Get today",
+      "description": "Read what drizza already has for today before pushing a new briefing.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "const": "1"
+          }
+        },
+        "required": ["contract_version"]
+      }
+    }
+  ]
+}
