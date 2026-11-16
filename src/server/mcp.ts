@@ -1,6 +1,6 @@
 import type { IncomingMessage } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
-import { pushBriefing, type BriefingInput } from "./briefings.js";
+import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
 import { compileSchema, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
@@ -230,6 +230,8 @@ function callTool(id: JsonRpcId, params: JsonObject, envelope: JsonObject, datab
   switch (name) {
     case "push_briefing":
       return callPushBriefing(id, args as unknown as BriefingInput, envelope, database);
+    case "get_today":
+      return callGetToday(id, args, envelope, database);
     default:
       return toolError(id, envelope, `${name} is not implemented yet.`);
   }
@@ -243,6 +245,16 @@ function callPushBriefing(id: JsonRpcId, input: BriefingInput, envelope: JsonObj
   }
 
   return toolResult(id, envelope, { ...pushBriefing(database, input) });
+}
+
+function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, database: DatabaseSync): McpReply {
+  const date = typeof args.date === "string" ? args.date : localToday();
+
+  if (!isCalendarDate(date)) {
+    return toolError(id, envelope, describeIssues([{ path: "/date", message: "must be a real calendar date" }]));
+  }
+
+  return toolResult(id, envelope, { date, briefing: getBriefing(database, date), items: [] });
 }
 
 function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {

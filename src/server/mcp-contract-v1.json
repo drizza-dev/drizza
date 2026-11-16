@@ -154,8 +154,7 @@
           "briefing_id",
           "date",
           "replaced"
-        ],
-        "additionalProperties": false
+        ]
       }
     },
     {
@@ -217,7 +216,7 @@
     {
       "name": "get_today",
       "title": "Get today",
-      "description": "Read what drizza already has for a day (today by default) before pushing a new briefing.",
+      "description": "Read what drizza already has for a day before pushing a new briefing. Without date, the day is today in the local time zone of the machine running drizza, not UTC.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -228,7 +227,7 @@
           "date": {
             "type": "string",
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-            "description": "Day to read, as YYYY-MM-DD. Defaults to today on the machine running drizza."
+            "description": "Day to read, as YYYY-MM-DD. Defaults to today in the local time zone of the machine running drizza (not UTC)."
           }
         },
         "required": [
@@ -240,7 +239,8 @@
         "type": "object",
         "properties": {
           "date": {
-            "type": "string"
+            "type": "string",
+            "description": "Day that was read, as YYYY-MM-DD in the local time zone of the machine running drizza."
           },
           "briefing": {
             "type": [
@@ -313,8 +313,7 @@
                                 "url",
                                 "label",
                                 "source"
-                              ],
-                              "additionalProperties": false
+                              ]
                             }
                           },
                           "item_refs": {
@@ -337,24 +336,21 @@
                               "required": [
                                 "source",
                                 "external_id"
-                              ],
-                              "additionalProperties": false
+                              ]
                             },
                             "description": "Items this bullet refers to, by the same source and external_id used by push_items."
                           }
                         },
                         "required": [
                           "text"
-                        ],
-                        "additionalProperties": false
+                        ]
                       }
                     }
                   },
                   "required": [
                     "title",
                     "bullets"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "received_at": {
@@ -368,8 +364,7 @@
               "headline",
               "sections",
               "received_at"
-            ],
-            "additionalProperties": false
+            ]
           },
           "items": {
             "type": "array",
@@ -397,17 +392,16 @@
                 "source",
                 "external_id",
                 "origin"
-              ],
-              "additionalProperties": false
-            }
+              ]
+            },
+            "description": "Items for the day. Always empty until push_items lands."
           }
         },
         "required": [
           "date",
           "briefing",
           "items"
-        ],
-        "additionalProperties": false
+        ]
       }
     }
   ]

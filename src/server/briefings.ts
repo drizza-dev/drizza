@@ -89,3 +89,47 @@ export function pushBriefing(database: DatabaseSync, input: BriefingInput): Push
     throw error;
   }
 }
+
+export interface StoredBriefing {
+  briefing_id: string;
+  date: string;
+  agent: string;
+  headline: string;
+  sections: BriefingSection[];
+  received_at: string;
+}
+
+interface BriefingRow {
+  id: string;
+  date: string;
+  agent: string;
+  headline: string;
+  payload_json: string;
+  received_at: string;
+}
+
+export function getBriefing(database: DatabaseSync, date: string): StoredBriefing | null {
+  const row = database
+    .prepare("SELECT id, date, agent, headline, payload_json, received_at FROM briefings WHERE date = ?")
+    .get(date) as BriefingRow | undefined;
+
+  if (!row) return null;
+
+  const payload = JSON.parse(row.payload_json) as { sections?: BriefingSection[] };
+
+  return {
+    briefing_id: row.id,
+    date: row.date,
+    agent: row.agent,
+    headline: row.headline,
+    sections: payload.sections ?? [],
+    received_at: row.received_at,
+  };
+}
+
+export function localToday(now: Date = new Date()): string {
+  const year = String(now.getFullYear()).padStart(4, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
