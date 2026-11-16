@@ -696,6 +696,84 @@ a:focus-visible {
   font-size: 12px;
 }
 
+.github-sync-state {
+  min-height: 18px;
+  margin: -8px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.github-pr-list {
+  max-height: 270px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.github-pr-list[hidden],
+.github-pr-empty[hidden] {
+  display: none;
+}
+
+.github-pr-item {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+
+.github-pr-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.github-pr-link {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 620;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+a.github-pr-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.github-pr-draft {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--progress-ink);
+  background: var(--progress-surface);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.github-pr-meta,
+.github-pr-updated {
+  display: block;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
 .empty-icon {
   color: var(--empty-icon);
   font-size: 16px;

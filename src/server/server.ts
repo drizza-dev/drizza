@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { extname, resolve, sep } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import { getSyncStatus } from "./database.js";
+import { getGithubPrs, getSyncStatus } from "./database.js";
+import { runGithubSync, startGithubSync } from "./github-sync.js";
 import { handleMcpRequest, type McpOptions, type McpReply } from "./mcp.js";
 
 interface ServerOptions {
@@ -77,8 +78,18 @@ async function handleRequest(
       return;
     }
 
-    sendJson(response, 405, { error: "method_not_allowed" });
-    return;
+    let writePath: string | null = null;
+
+    try {
+      writePath = new URL(request.url ?? "/", "http://127.0.0.1").pathname;
+    } catch {}
+
+    if (method !== "POST" || writePath !== "/api/sync/github") {
+      sendJson(response, 405, { error: "method_not_allowed" });
+      return;
+    }
+
+    request.resume();
   }
 
   let pathname: string;
@@ -92,6 +103,44 @@ async function handleRequest(
 
   if (pathname === "/api/sync/status") {
     sendJson(response, 200, getSyncStatus(options.database), method === "HEAD");
+    return;
+  }
+
+  if (pathname === "/api/github/prs") {
+    sendJson(
+      response,
+      200,
+      { ...getGithubPrs(options.database), lastSync: getSyncStatus(options.database).last },
+      method === "HEAD",
+    );
+    return;
+  }
+
+  if (pathname === "/api/sync/github") {
+    if (method !== "POST") {
+      sendJson(response, 405, { error: "method_not_allowed" }, method === "HEAD");
+      return;
+    }
+
+    const result = startGithubSync(options.database);
+
+    if (result.kind === "in_progress") {
+      sendJson(response, 409, { error: "sync_in_progress" });
+      return;
+    }
+
+    if (result.kind === "no_token") {
+      sendJson(response, 401, { error: "no_token", hint: result.hint });
+      return;
+    }
+
+    if (result.kind === "error") {
+      sendJson(response, 500, { error: "internal_server_error" });
+      return;
+    }
+
+    sendJson(response, 202, { runId: result.runId });
+    void runGithubSync(options.database, result.runId, result.token).catch(() => undefined);
     return;
   }
 
