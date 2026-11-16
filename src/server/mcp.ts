@@ -1,7 +1,8 @@
 import type { IncomingMessage } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
-import { compileSchema, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
+import { getItemsForDay, itemKey, normalizeWebUrl, pushItems, type PushItemsInput } from "./items.js";
+import { compileSchema, maxSchemaIssues, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
 
@@ -26,12 +27,17 @@ const maxBodyBytes = 1024 * 1024;
 const toolNames = new Set(contract.tools.map((tool) => tool.name));
 const contractMeta = { "dev.drizza/contract_version": contract.contract_version };
 const maxReportedIssues = 20;
+const maxUrlLength = 2048;
 const inputValidators = new Map<string, SchemaValidator>(
   (contract.tools as Array<{ name: string; inputSchema: unknown }>).map((tool) => [
     tool.name,
     compileSchema(tool.inputSchema),
   ]),
 );
+
+for (const tool of contract.tools as Array<{ outputSchema?: unknown }>) {
+  if (tool.outputSchema !== undefined) compileSchema(tool.outputSchema);
+}
 
 export async function handleMcpRequest(
   request: IncomingMessage,
@@ -230,6 +236,8 @@ function callTool(id: JsonRpcId, params: JsonObject, envelope: JsonObject, datab
   switch (name) {
     case "push_briefing":
       return callPushBriefing(id, args as unknown as BriefingInput, envelope, database);
+    case "push_items":
+      return callPushItems(id, args as unknown as PushItemsInput, envelope, database);
     case "get_today":
       return callGetToday(id, args, envelope, database);
     default:
@@ -244,7 +252,30 @@ function callPushBriefing(id: JsonRpcId, input: BriefingInput, envelope: JsonObj
     return toolError(id, envelope, describeIssues(issues));
   }
 
-  return toolResult(id, envelope, { ...pushBriefing(database, input) });
+  return toolResult(id, envelope, { ...pushBriefing(database, normalizeBriefing(input)) });
+}
+
+function normalizeBriefing(input: BriefingInput): BriefingInput {
+  return {
+    ...input,
+    sections: input.sections.map((section) => ({
+      ...section,
+      bullets: section.bullets.map((bullet) => ({
+        ...bullet,
+        ...(bullet.links === undefined
+          ? {}
+          : { links: bullet.links.map((link) => ({ ...link, url: normalizeWebUrl(link.url) })) }),
+        ...(bullet.item_refs === undefined
+          ? {}
+          : {
+              item_refs: bullet.item_refs.map((ref) => {
+                const key = itemKey(ref.source, ref.external_id);
+                return { source: key.source, external_id: key.externalId };
+              }),
+            }),
+      })),
+    })),
+  };
 }
 
 function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, database: DatabaseSync): McpReply {
@@ -254,7 +285,43 @@ function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, dat
     return toolError(id, envelope, describeIssues([{ path: "/date", message: "must be a real calendar date" }]));
   }
 
-  return toolResult(id, envelope, { date, briefing: getBriefing(database, date), items: [] });
+  return toolResult(id, envelope, {
+    date,
+    briefing: getBriefing(database, date),
+    items: getItemsForDay(database, date),
+  });
+}
+
+function callPushItems(id: JsonRpcId, input: PushItemsInput, envelope: JsonObject, database: DatabaseSync): McpReply {
+  const issues = itemsRuntimeIssues(input);
+
+  if (issues.length > 0) {
+    return toolError(id, envelope, describeIssues(issues));
+  }
+
+  return toolResult(id, envelope, { ...pushItems(database, input) });
+}
+
+function itemsRuntimeIssues(input: PushItemsInput): SchemaIssue[] {
+  const issues: SchemaIssue[] = [];
+
+  input.items.forEach((item, index) => {
+    const urlMessage = item.url === undefined ? null : webUrlIssue(item.url);
+    if (urlMessage) issues.push({ path: `/items/${index}/url`, message: urlMessage });
+
+    if (item.updated_at !== undefined && !isTimestamp(item.updated_at)) {
+      issues.push({ path: `/items/${index}/updated_at`, message: "must be a real RFC 3339 timestamp" });
+    }
+  });
+
+  return issues;
+}
+
+function isTimestamp(value: string): boolean {
+  const match = /^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})/.exec(value);
+  if (!match || !isCalendarDate(match[1])) return false;
+  const [hours, minutes, seconds] = [Number(match[2]), Number(match[3]), Number(match[4])];
+  return hours < 24 && minutes < 60 && seconds < 60 && Number.isFinite(Date.parse(value));
 }
 
 function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
@@ -267,11 +334,9 @@ function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
   input.sections.forEach((section, sectionIndex) => {
     section.bullets.forEach((bullet, bulletIndex) => {
       (bullet.links ?? []).forEach((link, linkIndex) => {
-        if (!isWebUrl(link.url)) {
-          issues.push({
-            path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`,
-            message: "must be an absolute http: or https: URL",
-          });
+        const urlMessage = webUrlIssue(link.url);
+        if (urlMessage) {
+          issues.push({ path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`, message: urlMessage });
         }
       });
     });
@@ -286,18 +351,27 @@ function isCalendarDate(value: string): boolean {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-function isWebUrl(value: string): boolean {
+function webUrlIssue(value: string): string | null {
+  let url: URL;
+
   try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    url = new URL(value);
   } catch {
-    return false;
+    return "must be an absolute http: or https: URL without credentials";
   }
+
+  if ((url.protocol !== "http:" && url.protocol !== "https:") || url.username !== "" || url.password !== "") {
+    return "must be an absolute http: or https: URL without credentials";
+  }
+
+  return [...url.href].length > maxUrlLength ? `must have at most ${maxUrlLength} characters once normalized` : null;
 }
 
 function describeIssues(issues: SchemaIssue[]): string {
   const lines = issues.slice(0, maxReportedIssues).map((issue) => `${issue.path} ${issue.message}`);
-  const more = issues.length > maxReportedIssues ? [`and ${issues.length - maxReportedIssues} more`] : [];
+  const hidden = issues.length - maxReportedIssues;
+  const more =
+    hidden <= 0 ? [] : issues.length > maxSchemaIssues ? [`and at least ${hidden} more`] : [`and ${hidden} more`];
   return ["Invalid arguments:", ...lines, ...more].join("\n");
 }
 
