@@ -3,11 +3,13 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { extname, resolve, sep } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import { getSyncStatus } from "./database.js";
+import { handleMcpRequest, type McpOptions, type McpReply } from "./mcp.js";
 
 interface ServerOptions {
   database: DatabaseSync;
   distDirectory: string;
   port: number;
+  mcp: McpOptions;
 }
 
 const contentTypes: Record<string, string> = {
@@ -56,6 +58,16 @@ async function handleRequest(
 
   if (!expectedOrigin) {
     sendJson(response, 403, { error: "invalid_host" }, method === "HEAD");
+    return;
+  }
+
+  if (isMcpPath(request.url)) {
+    if (request.headers.origin !== undefined && !isAllowedOrigin(request.headers.origin, expectedOrigin)) {
+      sendJson(response, 403, { error: "invalid_origin" }, method === "HEAD");
+      return;
+    }
+
+    sendMcpReply(response, await handleMcpRequest(request, options.mcp), method === "HEAD");
     return;
   }
 
@@ -130,6 +142,28 @@ async function serveStaticFile(
   response.end(file);
 }
 
+function isMcpPath(url: string | undefined): boolean {
+  try {
+    return new URL(url ?? "/", "http://127.0.0.1").pathname === "/mcp";
+  } catch {
+    return false;
+  }
+}
+
+function sendMcpReply(response: ServerResponse, reply: McpReply, headOnly: boolean): void {
+  if (reply.payload === undefined) {
+    response.writeHead(reply.status, {
+      ...responseHeaders,
+      ...reply.headers,
+      "Cache-Control": "no-store",
+    });
+    response.end();
+    return;
+  }
+
+  sendJson(response, reply.status, reply.payload, headOnly, reply.headers);
+}
+
 function allowedOrigin(hostHeader: string | undefined, port: number): string | null {
   if (!hostHeader) return null;
 
@@ -180,10 +214,12 @@ function sendJson(
   statusCode: number,
   payload: unknown,
   headOnly = false,
+  extraHeaders: Record<string, string> = {},
 ): void {
   const body = Buffer.from(JSON.stringify(payload));
   response.writeHead(statusCode, {
     ...responseHeaders,
+    ...extraHeaders,
     "Cache-Control": "no-store",
     "Content-Length": String(body.byteLength),
     "Content-Type": "application/json; charset=utf-8",
