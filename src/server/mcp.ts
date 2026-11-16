@@ -1,4 +1,7 @@
 import type { IncomingMessage } from "node:http";
+import type { DatabaseSync } from "node:sqlite";
+import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
+import { compileSchema, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
 
@@ -22,8 +25,19 @@ const supportedVersions = [modernVersion, ...legacyVersions];
 const maxBodyBytes = 1024 * 1024;
 const toolNames = new Set(contract.tools.map((tool) => tool.name));
 const contractMeta = { "dev.drizza/contract_version": contract.contract_version };
+const maxReportedIssues = 20;
+const inputValidators = new Map<string, SchemaValidator>(
+  (contract.tools as Array<{ name: string; inputSchema: unknown }>).map((tool) => [
+    tool.name,
+    compileSchema(tool.inputSchema),
+  ]),
+);
 
-export async function handleMcpRequest(request: IncomingMessage, options: McpOptions): Promise<McpReply> {
+export async function handleMcpRequest(
+  request: IncomingMessage,
+  options: McpOptions,
+  database: DatabaseSync,
+): Promise<McpReply> {
   if (request.method !== "POST") {
     return { status: 405, payload: { error: "method_not_allowed" }, headers: { Allow: "POST" } };
   }
@@ -80,10 +94,10 @@ export async function handleMcpRequest(request: IncomingMessage, options: McpOpt
       return rpcError(400, id, -32602, "Invalid params: missing required _meta fields");
     }
 
-    return handleLegacy(request, id, method, params, options);
+    return handleLegacy(request, id, method, params, options, database);
   }
 
-  return handleModern(request, id, method, params, meta ?? {}, metaVersion, options);
+  return handleModern(request, id, method, params, meta ?? {}, metaVersion, options, database);
 }
 
 function handleLegacy(
@@ -92,6 +106,7 @@ function handleLegacy(
   method: string,
   params: JsonObject,
   options: McpOptions,
+  database: DatabaseSync,
 ): McpReply {
   const headerVersion = singleHeader(request, "mcp-protocol-version");
 
@@ -116,7 +131,7 @@ function handleLegacy(
     case "tools/list":
       return rpcResult(id, { tools: contract.tools });
     case "tools/call":
-      return callTool(id, params, {});
+      return callTool(id, params, {}, database);
     default:
       return rpcError(200, id, -32601, "Method not found");
   }
@@ -130,6 +145,7 @@ function handleModern(
   meta: JsonObject,
   metaVersion: unknown,
   options: McpOptions,
+  database: DatabaseSync,
 ): McpReply {
   const headerVersion = singleHeader(request, "mcp-protocol-version");
 
@@ -186,24 +202,115 @@ function handleModern(
     case "tools/list":
       return rpcResult(id, { resultType: "complete", tools: contract.tools, _meta: modernMeta });
     case "tools/call":
-      return callTool(id, params, { resultType: "complete", _meta: modernMeta });
+      return callTool(id, params, { resultType: "complete", _meta: modernMeta }, database);
     default:
       return rpcError(404, id, -32601, "Method not found");
   }
 }
 
-function callTool(id: JsonRpcId, params: JsonObject, envelope: JsonObject): McpReply {
+function callTool(id: JsonRpcId, params: JsonObject, envelope: JsonObject, database: DatabaseSync): McpReply {
   const name = params.name;
 
   if (typeof name !== "string" || !toolNames.has(name)) {
     return rpcError(200, id, -32602, "Unknown tool");
   }
 
+  const args = params.arguments ?? {};
+
+  if (!isObject(args)) {
+    return toolError(id, envelope, "Invalid arguments: arguments must be an object.");
+  }
+
+  const issues = inputValidators.get(name)?.(args) ?? [];
+
+  if (issues.length > 0) {
+    return toolError(id, envelope, describeIssues(issues));
+  }
+
+  switch (name) {
+    case "push_briefing":
+      return callPushBriefing(id, args as unknown as BriefingInput, envelope, database);
+    case "get_today":
+      return callGetToday(id, args, envelope, database);
+    default:
+      return toolError(id, envelope, `${name} is not implemented yet.`);
+  }
+}
+
+function callPushBriefing(id: JsonRpcId, input: BriefingInput, envelope: JsonObject, database: DatabaseSync): McpReply {
+  const issues = briefingRuntimeIssues(input);
+
+  if (issues.length > 0) {
+    return toolError(id, envelope, describeIssues(issues));
+  }
+
+  return toolResult(id, envelope, { ...pushBriefing(database, input) });
+}
+
+function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, database: DatabaseSync): McpReply {
+  const date = typeof args.date === "string" ? args.date : localToday();
+
+  if (!isCalendarDate(date)) {
+    return toolError(id, envelope, describeIssues([{ path: "/date", message: "must be a real calendar date" }]));
+  }
+
+  return toolResult(id, envelope, { date, briefing: getBriefing(database, date), items: [] });
+}
+
+function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
+  const issues: SchemaIssue[] = [];
+
+  if (!isCalendarDate(input.date)) {
+    issues.push({ path: "/date", message: "must be a real calendar date" });
+  }
+
+  input.sections.forEach((section, sectionIndex) => {
+    section.bullets.forEach((bullet, bulletIndex) => {
+      (bullet.links ?? []).forEach((link, linkIndex) => {
+        if (!isWebUrl(link.url)) {
+          issues.push({
+            path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`,
+            message: "must be an absolute http: or https: URL",
+          });
+        }
+      });
+    });
+  });
+
+  return issues;
+}
+
+function isCalendarDate(value: string): boolean {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function isWebUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function describeIssues(issues: SchemaIssue[]): string {
+  const lines = issues.slice(0, maxReportedIssues).map((issue) => `${issue.path} ${issue.message}`);
+  const more = issues.length > maxReportedIssues ? [`and ${issues.length - maxReportedIssues} more`] : [];
+  return ["Invalid arguments:", ...lines, ...more].join("\n");
+}
+
+function toolResult(id: JsonRpcId, envelope: JsonObject, structuredContent: JsonObject): McpReply {
   return rpcResult(id, {
     ...envelope,
-    content: [{ type: "text", text: `${name} is not implemented yet.` }],
-    isError: true,
+    content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+    structuredContent,
   });
+}
+
+function toolError(id: JsonRpcId, envelope: JsonObject, text: string): McpReply {
+  return rpcResult(id, { ...envelope, content: [{ type: "text", text }], isError: true });
 }
 
 function serverInfo(options: McpOptions): JsonObject {
