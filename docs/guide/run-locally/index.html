@@ -37,7 +37,7 @@
   <div class="guide-layout">
     <nav class="guide-nav" aria-label="Guides">
   <p class="eyebrow">Guides</p>
-  <a href="/guide/run-locally/" aria-current="page">Run locally</a> <a href="/guide/accounts/">Accounts</a> <a href="/guide/mcp/">MCP</a> <a href="/guide/contributing/">Contributing</a>
+  <a href="/guide/run-locally/" aria-current="page">Run locally</a> <a href="/guide/accounts/">Accounts</a> <a href="/guide/github/">GitHub</a> <a href="/guide/mcp/">MCP</a> <a href="/guide/contributing/">Contributing</a>
 </nav>
     <article class="prose">
       <header class="guide-intro"><p class="eyebrow">Open-source guide</p><h1>Run Drizza locally</h1><p>Start the local Drizza app and understand how it uses your machine.</p></header>
@@ -45,8 +45,12 @@
 <p>Use Node.js that matches <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>. The project uses Node's built-in SQLite support, so use a release in the supported range.</p>
 
 <h2 id="start">Start Drizza</h2>
-<p>Run the package from a terminal:</p>
-<pre class="command-block"><code>npx drizza</code></pre>
+<p>Drizza is not published to npm yet. Run it from a clone of <a href="https://github.com/drizza-dev/drizza">the repository</a>, with pnpm installed. From the repository directory, install dependencies:</p>
+<pre class="command-block"><code>pnpm install</code></pre>
+<p>Build the dashboard and the local server:</p>
+<pre class="command-block"><code>pnpm build</code></pre>
+<p>Start Drizza:</p>
+<pre class="command-block"><code>node dist-node/cli/index.js</code></pre>
 <p>Drizza binds to <code class="inline-code">127.0.0.1</code> and listens on port <code class="inline-code">4340</code> by default. Open <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> in your browser.</p>
 
 <h2 id="data">Local data</h2>
@@ -56,12 +60,12 @@
 <h2 id="security">Security and tokens</h2>
 <ul>
   <li>The local server binds to <code class="inline-code">127.0.0.1</code>, so it is not exposed to other devices on your network.</li>
-  <li>The planned behavior for provider integrations is for the local process to use credentials and send requests directly to each provider. Token values are planned to stay out of Drizza-hosted services, the SQLite database, logs, API responses, and UI.</li>
-  <li>Provider integrations and their token-management instructions are still being prepared. Exact MCP token revocation steps will be published with the MCP guide once its local token location is finalized.</li>
+  <li>The GitHub integration uses your credentials from the local process and sends requests directly to GitHub. The SQLite database records only where the token came from, never its value. See <a href="/guide/github/">Connect GitHub</a>.</li>
+  <li>Exact MCP token revocation steps will be published with the MCP guide once its local token location is finalized.</li>
 </ul>
 
 <h2 id="integrations">Integrations</h2>
-<p>GitHub, MCP, and Slack setup guides are coming soon. This guide does not include setup commands for those integrations.</p>
+<p>To fill the pull request cards, follow <a href="/guide/github/">Connect GitHub</a>. For agents, see the <a href="/guide/mcp/">MCP guide</a>. The Slack integration is coming soon.</p>
       <nav class="page-actions" aria-label="Adjacent guides"><a href="/">← Home</a><a href="/guide/accounts/">Accounts →</a></nav>
     </article>
   </div>

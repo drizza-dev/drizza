@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Conecte o GitHub ao Drizza com o GitHub CLI ou com um token de acesso pessoal fine-grained e preencha os cards de pull requests.">
+  <meta name="theme-color" content="#f4f3ed">
+  <title>Conectar o GitHub · Drizza Docs</title>
+  <link rel="canonical" href="https://docs.drizza.dev/pt/guide/github/">
+  <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/github/">
+  <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/github/">
+  <link rel="alternate" hreflang="x-default" href="https://docs.drizza.dev/guide/github/">
+  <link rel="icon" href="/drizza-mark.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<header class="site-header wrap">
+  <a class="brand" href="/pt/" aria-label="Início do Drizza">
+    <img src="/drizza-mark.svg" width="34" height="34" alt="">
+    <span>drizza</span>
+  </a>
+  <nav class="primary-nav" aria-label="Navegação principal">
+    <a href="/pt/">Visão geral</a>
+    <a href="/pt/#guides">Guias</a>
+    <a href="/pt/guide/contributing/">Contribuir</a>
+  </nav>
+  <div class="header-actions">
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
+    <a class="language-link" href="/guide/github/" lang="en" hreflang="en">EN</a>
+  </div>
+</header>
+<main id="main" class="page-main wrap">
+  <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="/pt/">Início</a><span aria-hidden="true">/</span><span>Guias</span><span aria-hidden="true">/</span><span aria-current="page">Conectar o GitHub</span></nav>
+  <div class="guide-layout">
+    <nav class="guide-nav" aria-label="Guias">
+  <p class="eyebrow">Guias</p>
+  <a href="/pt/guide/run-locally/">Rodar localmente</a> <a href="/pt/guide/accounts/">Contas</a> <a href="/pt/guide/github/" aria-current="page">GitHub</a> <a href="/pt/guide/mcp/">MCP</a> <a href="/pt/guide/contributing/">Contribuir</a>
+</nav>
+    <article class="prose">
+      <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Conectar o GitHub</h1><p>Preencha os cards de pull requests com as PRs abertas que aguardam sua revisão e as que você abriu.</p></header>
+      <h2 id="what-syncs">O que o Drizza lê</h2>
+<p>Cada sync faz duas buscas na API de busca do GitHub, com as suas próprias credenciais, direto do processo local:</p>
+<ul>
+  <li>Revisões pedidas: <code class="inline-code">is:pr is:open archived:false review-requested:@me</code></li>
+  <li>Suas pull requests: <code class="inline-code">is:pr is:open archived:false author:@me</code></li>
+</ul>
+<p>Os resultados ficam em cache no banco SQLite local. Um sync só começa quando você clica em <strong>Sync Now</strong> no dashboard.</p>
+
+<h2 id="token-order">Como o Drizza encontra um token</h2>
+<p>No início de cada sync, o Drizza procura um token nesta ordem:</p>
+<ol>
+  <li>A saída de <code class="inline-code">gh auth token</code>, do GitHub CLI.</li>
+  <li>A variável de ambiente <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> do processo do Drizza.</li>
+</ol>
+<p>Se o GitHub CLI devolver um token, a <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> não é usada. Para sincronizar com um token de acesso pessoal, rode o Drizza num ambiente em que <code class="inline-code">gh auth token</code> não devolva token.</p>
+
+<h2 id="gh">Recomendado: o GitHub CLI</h2>
+<p>Instale o <a href="https://cli.github.com/">GitHub CLI</a> e faça login:</p>
+<pre class="command-block"><code>gh auth login</code></pre>
+<p>Confirme que há um token disponível para o mesmo usuário que roda o Drizza:</p>
+<pre class="command-block"><code>gh auth status</code></pre>
+<p>Depois inicie o Drizza como descrito em <a href="/pt/guide/run-locally/">Rodar localmente</a>, abra o dashboard e clique em <strong>Sync Now</strong>. Depois de um sync bem-sucedido, a fonte GitHub mostra <strong>Sync via gh</strong>.</p>
+
+<h2 id="pat">Alternativa: um token de acesso pessoal fine-grained</h2>
+<p>Se você não usa o GitHub CLI, crie um <a href="https://github.com/settings/personal-access-tokens/new">token de acesso pessoal fine-grained</a> e entregue-o ao Drizza pela <code class="inline-code">DRIZZA_GITHUB_TOKEN</code>.</p>
+<ol>
+  <li>Em <strong>Resource owner</strong>, escolha a conta ou a organização dona dos repositórios privados que você quer ver.</li>
+  <li>Em <strong>Repository access</strong>, selecione esses repositórios, ou todos os repositórios desse dono.</li>
+  <li>Em <strong>Repository permissions</strong>, defina <strong>Pull requests</strong> como <strong>Read-only</strong>. O GitHub adiciona <strong>Metadata</strong> como somente leitura automaticamente. Não conceda permissão de escrita; o Drizza só lê.</li>
+  <li>Gere o token e mantenha-o fora de arquivos versionados ou compartilhados.</li>
+</ol>
+<p>Defina a variável no shell que inicia o Drizza, para que só esse processo a receba:</p>
+<pre class="command-block"><code>export DRIZZA_GITHUB_TOKEN=&lt;seu-token&gt;</code></pre>
+<p>Inicie o Drizza nesse mesmo shell e clique em <strong>Sync Now</strong>. Depois de um sync bem-sucedido, a fonte GitHub mostra <strong>Sync via PAT</strong>.</p>
+<div class="info-box"><p><strong>Sobre a permissão mínima.</strong> A documentação do GitHub diz que o endpoint de busca não exige nenhuma permissão fine-grained específica e que ele devolve só os recursos que o token acessa. PRs públicas sempre aparecem. PRs privadas exigem que o repositório esteja no acesso do token; <strong>Pull requests: Read-only</strong> é a escolha conservadora para isso. Ainda não foi verificado se <strong>Metadata</strong> sozinha basta para PRs privadas aparecerem na busca.</p></div>
+
+<h2 id="token-storage">Para onde vai o token</h2>
+<ul>
+  <li>O Drizza lê o token no início de cada sync e o envia só para <code class="inline-code">api.github.com</code>.</li>
+  <li>O banco SQLite registra só a origem do token (<code class="inline-code">gh</code> ou <code class="inline-code">env</code>), nunca o valor.</li>
+  <li>O valor do token não é gravado em logs, em respostas da API nem no dashboard.</li>
+</ul>
+<p>Para revogar o acesso, saia com <code class="inline-code">gh auth logout</code>, ou apague o token de acesso pessoal nas configurações do GitHub e remova a <code class="inline-code">DRIZZA_GITHUB_TOKEN</code>.</p>
+
+<h2 id="limits">Limites conhecidos</h2>
+<ul>
+  <li><strong>100 pull requests por card.</strong> Cada busca lê uma única página de até 100 resultados, então um card mostra no máximo 100 PRs. O que passar disso fica de fora, sem aviso no dashboard.</li>
+  <li><strong>Resultados parciais.</strong> Quando o GitHub informa que uma busca estourou o tempo (<code class="inline-code">incomplete_results</code>), o Drizza mantém o cache anterior daquele card e o dashboard mostra um sync parcial.</li>
+  <li><strong>Um dono por token de acesso pessoal.</strong> Um token fine-grained só alcança recursos privados do seu resource owner. PRs privadas de outros donos não aparecem. O token do GitHub CLI não tem esse limite.</li>
+  <li><strong>Limite de buscas.</strong> O GitHub permite um número limitado de buscas autenticadas por minuto, e cada sync usa duas. Quando o limite é atingido, o sync falha e o dashboard mostra quando tentar de novo.</li>
+</ul>
+
+<h2 id="troubleshooting">Solução de problemas</h2>
+<h3 id="no-token">O dashboard diz que o token está ausente</h3>
+<p>A fonte GitHub mostra <strong>Token ausente</strong>, e uma mensagem de status explica o que fazer. Nem <code class="inline-code">gh auth token</code> nem <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> devolveram token para o processo do Drizza. Rode <code class="inline-code">gh auth status</code> com o mesmo usuário, ou confirme que a variável foi exportada no shell que iniciou o Drizza. Se você exportou a variável depois de iniciar o Drizza, reinicie-o a partir desse shell.</p>
+<h3 id="keychain">O GitHub CLI não consegue ler o keychain</h3>
+<p>Por SSH ou em outras sessões que não são de login, o GitHub CLI pode não conseguir ler um token guardado no keychain do sistema. O Drizza detecta isso e sugere o comando abaixo. Faça login de novo com armazenamento em arquivo:</p>
+<pre class="command-block"><code>gh auth login --insecure-storage</code></pre>
+<p>Isso guarda o token no arquivo de configuração do GitHub CLI em vez do keychain. Outra opção é usar a <code class="inline-code">DRIZZA_GITHUB_TOKEN</code>.</p>
+<h3 id="refused">O GitHub recusou o token ou a busca</h3>
+<p>Confira se o token não expirou, se os repositórios estão no acesso dele e se ele tem <strong>Pull requests: Read-only</strong>. Se o resource owner for uma organização que exige aprovação, o token fica pendente e só lê recursos públicos até alguém dono da organização aprová-lo. Organizações com SAML single sign-on também exigem que você autorize o token.</p>
+<h3 id="missing-prs">Algumas pull requests não aparecem</h3>
+<p>Confira o acesso a repositórios e o resource owner do token, e o limite de 100 resultados descrito acima.</p>
+      <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/accounts/">← Contas</a><a href="/pt/guide/mcp/">MCP →</a></nav>
+    </article>
+  </div>
+</main>
+<footer class="site-footer wrap">
+  <a class="footer-brand" href="/pt/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
+  <span>Código aberto · licença MIT</span>
+  <a href="https://github.com/drizza-dev/drizza">Ver código-fonte</a>
+</footer>
+</body>
+</html>
