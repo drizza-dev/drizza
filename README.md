@@ -4,8 +4,8 @@ Dashboard local para reunir contexto de trabalho agêntico: conversas, PRs e um 
 
 ## Começar
 
-- Instale as dependências com npm install.
-- Inicie o servidor de desenvolvimento com npm run dev.
+- Instale as dependências com pnpm install.
+- Inicie o servidor de desenvolvimento com pnpm run dev.
 
 ## Estado deste starter
 
