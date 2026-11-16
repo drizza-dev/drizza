@@ -292,6 +292,9 @@ let pendingGithubRunId: string | null = null
 let githubRefreshGeneration = 0
 let githubRefreshTimer: number | null = null
 let githubPollFailures = 0
+let githubPollGaveUp = false
+
+const isSyncRunning = (): boolean => githubData?.lastSync?.status === 'running' && !githubPollGaveUp
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -413,7 +416,7 @@ const cardState = (): { message: string; emptyMessage: string } => {
     return { message: 'Iniciando sincronização do GitHub.', emptyMessage: 'Aguardando início da busca.' }
   }
 
-  if (lastSync?.status === 'running') {
+  if (isSyncRunning()) {
     return { message: 'Sincronizando PRs do GitHub.', emptyMessage: 'A busca ainda está em andamento.' }
   }
 
@@ -458,14 +461,14 @@ const renderGithubCard = (view: GithubCardView | null, pullRequests: GithubPullR
 
 const renderGithubState = (): void => {
   const lastSync = githubData?.lastSync ?? null
-  const isRunning = startingGithubSync || lastSync?.status === 'running'
+  const isRunning = startingGithubSync || isSyncRunning()
 
   renderGithubCard(reviewsView, githubData?.reviews ?? [])
   renderGithubCard(authoredView, githubData?.authored ?? [])
 
   if (localSyncState) {
     if (startingGithubSync) localSyncState.textContent = 'Local · iniciando sync do GitHub'
-    else if (lastSync?.status === 'running') localSyncState.textContent = 'Local · sincronizando GitHub'
+    else if (isSyncRunning()) localSyncState.textContent = 'Local · sincronizando GitHub'
     else if (githubLoadError) localSyncState.textContent = 'Local · erro ao ler o estado do GitHub'
     else if (!lastSync) localSyncState.textContent = 'Local · GitHub ainda não sincronizado'
     else if (lastSync.status === 'error') localSyncState.textContent = 'Local · falha no sync do GitHub'
@@ -521,6 +524,7 @@ const loadGithubPrs = async (generation: number): Promise<void> => {
     githubData = payload
     githubLoadError = null
     githubPollFailures = 0
+    githubPollGaveUp = false
     renderGithubState()
     finishPendingSyncAnnouncement()
 
@@ -537,8 +541,8 @@ const loadGithubPrs = async (generation: number): Promise<void> => {
       githubRefreshTimer = window.setTimeout(() => {
         void loadGithubPrs(generation)
       }, 1000 * 2 ** githubPollFailures)
-    } else if (githubData?.lastSync) {
-      githubData = { ...githubData, lastSync: { ...githubData.lastSync, status: 'error' } }
+    } else {
+      githubPollGaveUp = true
     }
     renderGithubState()
   }
@@ -548,6 +552,8 @@ const refreshGithubPrs = (): void => {
   githubRefreshGeneration += 1
   if (githubRefreshTimer !== null) window.clearTimeout(githubRefreshTimer)
   githubRefreshTimer = null
+  githubPollFailures = 0
+  githubPollGaveUp = false
   void loadGithubPrs(githubRefreshGeneration)
 }
 
@@ -561,7 +567,7 @@ const readResponseBody = async (response: Response): Promise<Record<string, unkn
 }
 
 syncButton?.addEventListener('click', async () => {
-  if (startingGithubSync || githubData?.lastSync?.status === 'running') return
+  if (startingGithubSync || isSyncRunning()) return
 
   startingGithubSync = true
   renderGithubState()
