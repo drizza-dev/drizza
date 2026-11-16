@@ -17,30 +17,125 @@
             "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
             "description": "Day the briefing belongs to, as YYYY-MM-DD."
           },
+          "agent": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Name of the agent that wrote the briefing."
+          },
+          "headline": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
           "sections": {
             "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
             "items": {
               "type": "object",
               "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
                 "bullets": {
                   "type": "array",
+                  "minItems": 1,
+                  "maxItems": 30,
                   "items": {
                     "type": "object",
                     "properties": {
+                      "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000
+                      },
                       "links": {
                         "type": "array",
+                        "maxItems": 10,
                         "items": {
-                          "type": "object"
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 2048,
+                              "pattern": "^https?://",
+                              "description": "Absolute http or https URL of the source."
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 200
+                            },
+                            "source": {
+                              "type": "string",
+                              "enum": [
+                                "slack",
+                                "github",
+                                "other"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "url",
+                            "label",
+                            "source"
+                          ],
+                          "additionalProperties": false
                         }
+                      },
+                      "item_refs": {
+                        "type": "array",
+                        "maxItems": 10,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "source": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 32
+                            },
+                            "external_id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            }
+                          },
+                          "required": [
+                            "source",
+                            "external_id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "description": "Items this bullet refers to, by the same source and external_id used by push_items."
                       }
-                    }
+                    },
+                    "required": [
+                      "text"
+                    ],
+                    "additionalProperties": false
                   }
                 }
-              }
+              },
+              "required": [
+                "title",
+                "bullets"
+              ],
+              "additionalProperties": false
             }
           }
         },
-        "required": ["contract_version", "date", "sections"]
+        "required": [
+          "contract_version",
+          "date",
+          "agent",
+          "headline",
+          "sections"
+        ],
+        "additionalProperties": false
       },
       "outputSchema": {
         "type": "object",
@@ -55,7 +150,12 @@
             "type": "boolean"
           }
         },
-        "required": ["briefing_id", "date", "replaced"]
+        "required": [
+          "briefing_id",
+          "date",
+          "replaced"
+        ],
+        "additionalProperties": false
       }
     },
     {
@@ -84,11 +184,17 @@
                   "type": "string"
                 }
               },
-              "required": ["source", "external_id"]
+              "required": [
+                "source",
+                "external_id"
+              ]
             }
           }
         },
-        "required": ["contract_version", "items"]
+        "required": [
+          "contract_version",
+          "items"
+        ]
       },
       "outputSchema": {
         "type": "object",
@@ -102,22 +208,206 @@
             "minimum": 0
           }
         },
-        "required": ["inserted", "updated"]
+        "required": [
+          "inserted",
+          "updated"
+        ]
       }
     },
     {
       "name": "get_today",
       "title": "Get today",
-      "description": "Read what drizza already has for today before pushing a new briefing.",
+      "description": "Read what drizza already has for a day (today by default) before pushing a new briefing.",
       "inputSchema": {
         "type": "object",
         "properties": {
           "contract_version": {
             "type": "string",
             "const": "1"
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "Day to read, as YYYY-MM-DD. Defaults to today on the machine running drizza."
           }
         },
-        "required": ["contract_version"]
+        "required": [
+          "contract_version"
+        ],
+        "additionalProperties": false
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "briefing": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "briefing_id": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              },
+              "agent": {
+                "type": "string"
+              },
+              "headline": {
+                "type": "string"
+              },
+              "sections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "bullets": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 30,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "links": {
+                            "type": "array",
+                            "maxItems": 10,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "url": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048,
+                                  "pattern": "^https?://",
+                                  "description": "Absolute http or https URL of the source."
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "slack",
+                                    "github",
+                                    "other"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "url",
+                                "label",
+                                "source"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "item_refs": {
+                            "type": "array",
+                            "maxItems": 10,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 32
+                                },
+                                "external_id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                }
+                              },
+                              "required": [
+                                "source",
+                                "external_id"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "description": "Items this bullet refers to, by the same source and external_id used by push_items."
+                          }
+                        },
+                        "required": [
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "bullets"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "received_at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "briefing_id",
+              "date",
+              "agent",
+              "headline",
+              "sections",
+              "received_at"
+            ],
+            "additionalProperties": false
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string"
+                },
+                "external_id": {
+                  "type": "string"
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": [
+                    "sync",
+                    "agent"
+                  ]
+                },
+                "summary": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source",
+                "external_id",
+                "origin"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "date",
+          "briefing",
+          "items"
+        ],
+        "additionalProperties": false
       }
     }
   ]

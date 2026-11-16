@@ -67,7 +67,7 @@ async function handleRequest(
       return;
     }
 
-    sendMcpReply(response, await handleMcpRequest(request, options.mcp), method === "HEAD");
+    sendMcpReply(response, await handleMcpRequest(request, options.mcp, options.database), method === "HEAD");
     return;
   }
 

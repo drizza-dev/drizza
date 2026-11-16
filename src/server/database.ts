@@ -107,6 +107,33 @@ function migrate(database: DatabaseSync): void {
         .run(1, new Date().toISOString());
     }
 
+    const briefingsMigration = database
+      .prepare("SELECT version FROM schema_migrations WHERE version = ?")
+      .get(2);
+
+    if (!briefingsMigration) {
+      database.exec(
+        `CREATE TABLE IF NOT EXISTS briefings (
+           id TEXT PRIMARY KEY NOT NULL,
+           date TEXT NOT NULL UNIQUE,
+           agent TEXT NOT NULL,
+           headline TEXT NOT NULL,
+           payload_json TEXT NOT NULL,
+           received_at TEXT NOT NULL
+         );
+         CREATE TABLE IF NOT EXISTS sync_events (
+           id TEXT PRIMARY KEY NOT NULL,
+           kind TEXT NOT NULL,
+           occurred_at TEXT NOT NULL,
+           detail_json TEXT NOT NULL
+         );
+         CREATE INDEX IF NOT EXISTS sync_events_occurred_at ON sync_events (occurred_at)`,
+      );
+      database
+        .prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)")
+        .run(2, new Date().toISOString());
+    }
+
     database.exec("COMMIT");
   } catch (error) {
     database.exec("ROLLBACK");
