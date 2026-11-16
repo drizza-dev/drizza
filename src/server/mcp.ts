@@ -1,7 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
-import { getItemsForDay, pushItems, type PushItemsInput } from "./items.js";
+import { getItemsForDay, itemKey, normalizeWebUrl, pushItems, type PushItemsInput } from "./items.js";
 import { compileSchema, maxSchemaIssues, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
@@ -27,6 +27,7 @@ const maxBodyBytes = 1024 * 1024;
 const toolNames = new Set(contract.tools.map((tool) => tool.name));
 const contractMeta = { "dev.drizza/contract_version": contract.contract_version };
 const maxReportedIssues = 20;
+const maxUrlLength = 2048;
 const inputValidators = new Map<string, SchemaValidator>(
   (contract.tools as Array<{ name: string; inputSchema: unknown }>).map((tool) => [
     tool.name,
@@ -251,7 +252,30 @@ function callPushBriefing(id: JsonRpcId, input: BriefingInput, envelope: JsonObj
     return toolError(id, envelope, describeIssues(issues));
   }
 
-  return toolResult(id, envelope, { ...pushBriefing(database, input) });
+  return toolResult(id, envelope, { ...pushBriefing(database, normalizeBriefing(input)) });
+}
+
+function normalizeBriefing(input: BriefingInput): BriefingInput {
+  return {
+    ...input,
+    sections: input.sections.map((section) => ({
+      ...section,
+      bullets: section.bullets.map((bullet) => ({
+        ...bullet,
+        ...(bullet.links === undefined
+          ? {}
+          : { links: bullet.links.map((link) => ({ ...link, url: normalizeWebUrl(link.url) })) }),
+        ...(bullet.item_refs === undefined
+          ? {}
+          : {
+              item_refs: bullet.item_refs.map((ref) => {
+                const key = itemKey(ref.source, ref.external_id);
+                return { source: key.source, external_id: key.externalId };
+              }),
+            }),
+      })),
+    })),
+  };
 }
 
 function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, database: DatabaseSync): McpReply {
@@ -282,9 +306,8 @@ function itemsRuntimeIssues(input: PushItemsInput): SchemaIssue[] {
   const issues: SchemaIssue[] = [];
 
   input.items.forEach((item, index) => {
-    if (item.url !== undefined && !isWebUrl(item.url)) {
-      issues.push({ path: `/items/${index}/url`, message: "must be an absolute http: or https: URL without credentials" });
-    }
+    const urlMessage = item.url === undefined ? null : webUrlIssue(item.url);
+    if (urlMessage) issues.push({ path: `/items/${index}/url`, message: urlMessage });
 
     if (item.updated_at !== undefined && !isTimestamp(item.updated_at)) {
       issues.push({ path: `/items/${index}/updated_at`, message: "must be a real RFC 3339 timestamp" });
@@ -311,11 +334,9 @@ function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
   input.sections.forEach((section, sectionIndex) => {
     section.bullets.forEach((bullet, bulletIndex) => {
       (bullet.links ?? []).forEach((link, linkIndex) => {
-        if (!isWebUrl(link.url)) {
-          issues.push({
-            path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`,
-            message: "must be an absolute http: or https: URL without credentials",
-          });
+        const urlMessage = webUrlIssue(link.url);
+        if (urlMessage) {
+          issues.push({ path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`, message: urlMessage });
         }
       });
     });
@@ -330,13 +351,20 @@ function isCalendarDate(value: string): boolean {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-function isWebUrl(value: string): boolean {
+function webUrlIssue(value: string): string | null {
+  let url: URL;
+
   try {
-    const url = new URL(value);
-    return (url.protocol === "http:" || url.protocol === "https:") && url.username === "" && url.password === "";
+    url = new URL(value);
   } catch {
-    return false;
+    return "must be an absolute http: or https: URL without credentials";
   }
+
+  if ((url.protocol !== "http:" && url.protocol !== "https:") || url.username !== "" || url.password !== "") {
+    return "must be an absolute http: or https: URL without credentials";
+  }
+
+  return [...url.href].length > maxUrlLength ? `must have at most ${maxUrlLength} characters once normalized` : null;
 }
 
 function describeIssues(issues: SchemaIssue[]): string {

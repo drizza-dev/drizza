@@ -67,14 +67,18 @@ export function githubPullRequestExternalId(repo: string, number: number): strin
   return `${repo}#${number}`.toLowerCase();
 }
 
-function itemKey(source: string, externalId: string): { source: string; externalId: string } {
+export function itemKey(source: string, externalId: string): { source: string; externalId: string } {
   return source === githubPullRequestSource
     ? { source, externalId: externalId.toLowerCase() }
     : { source, externalId };
 }
 
+export function normalizeWebUrl(value: string): string {
+  return new URL(value).href;
+}
+
 function normalizeUrl(value: string | undefined): string | null {
-  return value === undefined ? null : new URL(value).href;
+  return value === undefined ? null : normalizeWebUrl(value);
 }
 
 export function pushItems(database: DatabaseSync, input: PushItemsInput): PushItemsResult {

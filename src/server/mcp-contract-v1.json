@@ -63,7 +63,7 @@
                               "minLength": 1,
                               "maxLength": 2048,
                               "pattern": "^https?://",
-                              "description": "Absolute http or https URL of the source. URLs with a username or password are rejected."
+                              "description": "Absolute http or https URL of the source. URLs with a username or password are rejected; the URL is stored normalized and must still fit in 2048 characters."
                             },
                             "label": {
                               "type": "string",
@@ -110,7 +110,7 @@
                           ],
                           "additionalProperties": false
                         },
-                        "description": "Items this bullet refers to, by the same source and external_id used by push_items."
+                        "description": "Items this bullet refers to, by the same source and external_id used by push_items. external_id is lowercased when source is exactly \"github\", as push_items does, so refs match get_today items."
                       }
                     },
                     "required": [
@@ -160,7 +160,7 @@
     {
       "name": "push_items",
       "title": "Push items",
-      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it. Updates merge: an optional field you omit keeps its stored value, on items you pushed and on synced items alike; clearing a field is not supported yet. Pull requests synced from GitHub use source \"github\" and external_id \"owner/repo#number\", matched without regard to case; pushing that key enriches the synced item with your summary and keeps its title, url, kind and updated_at as synced. If a pull request you enriched or pushed leaves the sync, drizza keeps it as your item with its summary. URLs with a username or password are rejected, and stored URLs are normalized. The input is closed: unknown fields are rejected, so check contract_version (in the initialize or server/discover _meta, key dev.drizza/contract_version) before sending a field from a newer contract.",
+      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it. Updates merge: an optional field you omit keeps its stored value, on items you pushed and on synced items alike; clearing a field is not supported yet. source is case sensitive. Only for source exactly \"github\" is external_id matched without regard to case (it is stored lowercased), for every kind; \"GitHub\" or any other casing is a separate source. Pull requests synced from GitHub use source \"github\", kind \"pull_request\" and external_id \"owner/repo#number\"; pushing that key enriches the synced item with your summary and keeps its title, url, kind and updated_at as synced. If the sync later reports an item you pushed under that key, it adopts it: kind, title, url and updated_at are overwritten with the synced values and your summary is kept. If a pull request you enriched or pushed leaves the sync, drizza keeps it as your item with its summary. URLs with a username or password are rejected, and stored URLs are normalized with the WHATWG URL parser and must still fit in 2048 characters. The input is closed: unknown fields are rejected, so check contract_version (in the initialize or server/discover _meta, key dev.drizza/contract_version) before sending a field from a newer contract.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -179,7 +179,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 32,
-                  "description": "Where the item comes from, such as github or slack. Same value item_refs uses in push_briefing."
+                  "description": "Where the item comes from, such as github or slack. Case sensitive. Same value item_refs uses in push_briefing."
                 },
                 "kind": {
                   "type": "string",
@@ -191,7 +191,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 256,
-                  "description": "Identifier of the item inside its source. For GitHub pull requests, owner/repo#number, case insensitive."
+                  "description": "Identifier of the item inside its source. Lowercased when source is exactly \"github\" (for pull requests, owner/repo#number); kept as given for any other source."
                 },
                 "title": {
                   "type": "string",
