@@ -3,7 +3,7 @@ import './style.css'
 const app = document.querySelector<HTMLDivElement>('#app')
 
 if (!app) {
-  throw new Error('Elemento raiz do Driza não encontrado.')
+  throw new Error('Elemento raiz do Drizza não encontrado.')
 }
 
 const today = new Intl.DateTimeFormat('pt-BR', {
@@ -15,9 +15,9 @@ const today = new Intl.DateTimeFormat('pt-BR', {
 app.innerHTML = [
   '<div class="app-shell">',
   '  <header class="topbar">',
-  '    <a class="brand" href="#home" aria-label="Driza, início">',
-  '      <img src="/driza-mark.svg" alt="" width="34" height="34" />',
-  '      <span>driza</span>',
+  '    <a class="brand" href="#home" aria-label="Drizza, início">',
+  '      <img src="/drizza-mark.svg" alt="" width="34" height="34" />',
+  '      <span>drizza</span>',
   '    </a>',
   '    <p class="brand-promise">seu dia, no seu rumo</p>',
   '    <div class="local-state"><span class="state-dot"></span><span>Local · sem sincronização</span></div>',
@@ -94,7 +94,7 @@ app.innerHTML = [
   '    </section>',
   '  </main>',
   '',
-  '  <footer class="footer"><span>driza</span><span>Seu trabalho, no seu rumo.</span><span>Local-first · somente leitura</span></footer>',
+  '  <footer class="footer"><span>drizza</span><span>Seu trabalho, no seu rumo.</span><span>Local-first · somente leitura</span></footer>',
   '</div>',
 ].join('')
 

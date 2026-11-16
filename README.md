@@ -1,4 +1,4 @@
-# Driza
+# Drizza
 
 Dashboard local para reunir contexto de trabalho agêntico: conversas, PRs e um briefing diário com links para as fontes.
 
