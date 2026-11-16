@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "allowImportingTsExtensions": false,
+    "noEmit": false,
+    "outDir": "dist-node",
+    "rootDir": "src"
+  },
+  "include": ["src/cli/**/*.ts", "src/server/**/*.ts"],
+  "exclude": []
+}
