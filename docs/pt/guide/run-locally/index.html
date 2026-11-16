@@ -18,7 +18,7 @@
 <body>
 <a class="skip-link" href="#main">Pular para o conteúdo</a>
 <header class="site-header wrap">
-  <a class="brand" href="/pt/" aria-label="Drizza home">
+  <a class="brand" href="/pt/" aria-label="Início do Drizza">
     <img src="/drizza-mark.svg" width="34" height="34" alt="">
     <span>drizza</span>
   </a>
@@ -28,7 +28,7 @@
     <a href="/pt/guide/contributing/">Contribuir</a>
   </nav>
   <div class="header-actions">
-    <a class="github-link" href="https://github.com/grippado/drizza">GitHub</a>
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
     <a class="language-link" href="/guide/run-locally/" lang="en" hreflang="en">EN</a>
   </div>
 </header>
@@ -47,7 +47,7 @@
 <h2 id="start">Inicie o Drizza</h2>
 <p>Execute o pacote no terminal:</p>
 <pre class="command-block"><code>npx drizza</code></pre>
-<p>O Drizza faz bind em <code class="inline-code">127.0.0.1</code> e usa a porta <code class="inline-code">4173</code> por padrão. Abra <a href="http://127.0.0.1:4173/">http://127.0.0.1:4173/</a> no navegador.</p>
+<p>O Drizza faz bind em <code class="inline-code">127.0.0.1</code> e usa a porta <code class="inline-code">4340</code> por padrão. Abra <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> no navegador.</p>
 
 <h2 id="data">Dados locais</h2>
 <p>O banco SQLite fica em <code class="inline-code">~/.drizza/drizza.db</code>. O Drizza o cria na primeira execução e mantém os dados na sua máquina.</p>
@@ -56,7 +56,7 @@
 <h2 id="security">Segurança e tokens</h2>
 <ul>
   <li>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, então outros dispositivos da sua rede não conseguem acessá-lo.</li>
-  <li>Quando as integrações com provedores estiverem disponíveis, o processo local usará as credenciais e enviará as requisições diretamente a cada provedor. Os tokens não serão enviados a um serviço hospedado pelo Drizza nem gravados no banco SQLite, nos logs, nas respostas da API ou na interface.</li>
+  <li>O comportamento planejado para as integrações com provedores é que o processo local use as credenciais e envie as requisições diretamente a cada provedor. Os tokens não devem passar por serviços hospedados pelo Drizza nem ser gravados no banco SQLite, nos logs, nas respostas da API ou na interface.</li>
   <li>As integrações com provedores e as instruções de gerenciamento de tokens ainda estão sendo preparadas. Os passos exatos para revogar o token MCP serão publicados no guia de MCP quando o local do token for definido.</li>
 </ul>
 
@@ -69,7 +69,7 @@
 <footer class="site-footer wrap">
   <a class="footer-brand" href="/pt/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
   <span>Código aberto · licença MIT</span>
-  <a href="https://github.com/grippado/drizza">Ver código-fonte</a>
+  <a href="https://github.com/drizza-dev/drizza">Ver código-fonte</a>
 </footer>
 </body>
 </html>

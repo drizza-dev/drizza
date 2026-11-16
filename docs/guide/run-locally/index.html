@@ -28,7 +28,7 @@
     <a href="/guide/contributing/">Contributing</a>
   </nav>
   <div class="header-actions">
-    <a class="github-link" href="https://github.com/grippado/drizza">GitHub</a>
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
     <a class="language-link" href="/pt/guide/run-locally/" lang="pt-BR" hreflang="pt-BR">PT-BR</a>
   </div>
 </header>
@@ -47,7 +47,7 @@
 <h2 id="start">Start Drizza</h2>
 <p>Run the package from a terminal:</p>
 <pre class="command-block"><code>npx drizza</code></pre>
-<p>Drizza binds to <code class="inline-code">127.0.0.1</code> and listens on port <code class="inline-code">4173</code> by default. Open <a href="http://127.0.0.1:4173/">http://127.0.0.1:4173/</a> in your browser.</p>
+<p>Drizza binds to <code class="inline-code">127.0.0.1</code> and listens on port <code class="inline-code">4340</code> by default. Open <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> in your browser.</p>
 
 <h2 id="data">Local data</h2>
 <p>The SQLite database lives at <code class="inline-code">~/.drizza/drizza.db</code>. Drizza creates it on the first run and keeps it on your machine.</p>
@@ -56,7 +56,7 @@
 <h2 id="security">Security and tokens</h2>
 <ul>
   <li>The local server binds to <code class="inline-code">127.0.0.1</code>, so it is not exposed to other devices on your network.</li>
-  <li>When provider integrations are available, the local process will use credentials and send requests directly to each provider. Token values will not be sent to a Drizza-hosted service or written to the SQLite database, logs, API responses, or UI.</li>
+  <li>The planned behavior for provider integrations is for the local process to use credentials and send requests directly to each provider. Token values are planned to stay out of Drizza-hosted services, the SQLite database, logs, API responses, and UI.</li>
   <li>Provider integrations and their token-management instructions are still being prepared. Exact MCP token revocation steps will be published with the MCP guide once its local token location is finalized.</li>
 </ul>
 
@@ -69,7 +69,7 @@
 <footer class="site-footer wrap">
   <a class="footer-brand" href="/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
   <span>Open source · MIT license</span>
-  <a href="https://github.com/grippado/drizza">View source</a>
+  <a href="https://github.com/drizza-dev/drizza">View source</a>
 </footer>
 </body>
 </html>

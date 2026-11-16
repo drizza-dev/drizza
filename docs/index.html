@@ -28,7 +28,7 @@
     <a href="/guide/contributing/">Contributing</a>
   </nav>
   <div class="header-actions">
-    <a class="github-link" href="https://github.com/grippado/drizza">GitHub</a>
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
     <a class="language-link" href="/pt/" lang="pt-BR" hreflang="pt-BR">PT-BR</a>
   </div>
 </header>
@@ -38,11 +38,11 @@
       <p class="eyebrow">Drizza · open-source guide</p>
       <h1>Run Drizza <em>locally.</em></h1>
       <p class="lede">Drizza is a local dashboard for gathering work context: conversations, pull requests, and a daily briefing with links to their sources.</p>
-      <div class="actions"><a class="button primary" href="/guide/run-locally/">Start the quickstart <span aria-hidden="true">↗</span></a><a class="button quiet" href="https://github.com/grippado/drizza">View the source</a></div>
+      <div class="actions"><a class="button primary" href="/guide/run-locally/">Start the quickstart <span aria-hidden="true">→</span></a><a class="button quiet" href="https://github.com/drizza-dev/drizza">View the source</a></div>
     </div>
     <aside class="hero-panel" aria-label="Local server overview">
       <span class="local-badge"><span></span> Runs on your machine</span>
-      <div><p class="local-status">Local server</p><p class="local-address"><code>127.0.0.1:4173</code></p><ul class="hero-list"><li>Conversations</li><li>Pull requests</li><li>Daily briefing</li></ul></div>
+      <div><p class="local-status">Local server</p><p class="local-address"><code>127.0.0.1:4340</code></p><ul class="hero-list"><li>Conversations</li><li>Pull requests</li><li>Daily briefing</li></ul></div>
     </aside>
   </section>
 
@@ -52,7 +52,7 @@
       <div class="quickstart-card">
         <article class="quickstart-step"><span class="step-number">01</span><h3>Check Node.js</h3><p>Required version: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>.</p></article>
         <article class="quickstart-step"><span class="step-number">02</span><h3>Start Drizza</h3><p>Run the package from your terminal.</p><pre class="command-block"><code>npx drizza</code></pre></article>
-        <article class="quickstart-step"><span class="step-number">03</span><h3>Open the local app</h3><p>Default address: <a href="http://127.0.0.1:4173/">http://127.0.0.1:4173/</a>.</p></article>
+        <article class="quickstart-step"><span class="step-number">03</span><h3>Open the local app</h3><p>Default address: <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a>.</p></article>
       </div>
     </div>
   </section>
@@ -67,11 +67,11 @@
 
   <section class="section tinted" id="security">
     <div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">Security</p><h2>Your data stays local.</h2></div><p>Drizza runs on loopback. When provider integrations are available, the local process will send requests directly to each provider; token values will not be sent to a Drizza-hosted service.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Security</p><h2>Your data stays local.</h2></div><p>Drizza runs on loopback. The planned behavior for provider integrations is for the local process to send requests directly to each provider; token values are planned to stay out of Drizza-hosted services.</p></div>
       <div class="security-strip">
         <article class="security-item"><h3>Loopback only</h3><p>The local server binds to <code class="inline-code">127.0.0.1</code>, not your network interface.</p></article>
         <article class="security-item"><h3>Local database</h3><p>SQLite data is stored at <code class="inline-code">~/.drizza/drizza.db</code>.</p></article>
-        <article class="security-item"><h3>Token guidance in progress</h3><p>Provider setup is coming soon. Token values will not be stored in SQLite, logs, API responses, or the UI. Exact MCP revocation steps will follow when its token location is confirmed.</p></article>
+        <article class="security-item"><h3>Token guidance in progress</h3><p>Provider setup is coming soon. The planned behavior is to keep token values out of SQLite, logs, API responses, and the UI. The MCP token-file location and revocation steps will be documented once finalized.</p></article>
       </div>
     </div>
   </section>
@@ -86,7 +86,7 @@
 <footer class="site-footer wrap">
   <a class="footer-brand" href="/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
   <span>Open source · MIT license</span>
-  <a href="https://github.com/grippado/drizza">View source</a>
+  <a href="https://github.com/drizza-dev/drizza">View source</a>
 </footer>
 </body>
 </html>

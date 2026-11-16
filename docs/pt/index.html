@@ -18,7 +18,7 @@
 <body>
 <a class="skip-link" href="#main">Pular para o conteúdo</a>
 <header class="site-header wrap">
-  <a class="brand" href="/pt/" aria-label="Drizza home">
+  <a class="brand" href="/pt/" aria-label="Início do Drizza">
     <img src="/drizza-mark.svg" width="34" height="34" alt="">
     <span>drizza</span>
   </a>
@@ -28,7 +28,7 @@
     <a href="/pt/guide/contributing/">Contribuir</a>
   </nav>
   <div class="header-actions">
-    <a class="github-link" href="https://github.com/grippado/drizza">GitHub</a>
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
     <a class="language-link" href="/" lang="en" hreflang="en">EN</a>
   </div>
 </header>
@@ -38,11 +38,11 @@
       <p class="eyebrow">Drizza · guia open source</p>
       <h1>Rode o Drizza <em>localmente.</em></h1>
       <p class="lede">O Drizza é um dashboard local para reunir contexto de trabalho: conversas, PRs e um briefing diário com links para as fontes.</p>
-      <div class="actions"><a class="button primary" href="/pt/guide/run-locally/">Começar o guia rápido <span aria-hidden="true">↗</span></a><a class="button quiet" href="https://github.com/grippado/drizza">Ver o código-fonte</a></div>
+      <div class="actions"><a class="button primary" href="/pt/guide/run-locally/">Começar o guia rápido <span aria-hidden="true">→</span></a><a class="button quiet" href="https://github.com/drizza-dev/drizza">Ver o código-fonte</a></div>
     </div>
     <aside class="hero-panel" aria-label="Visão geral do servidor local">
       <span class="local-badge"><span></span> Roda na sua máquina</span>
-      <div><p class="local-status">Servidor local</p><p class="local-address"><code>127.0.0.1:4173</code></p><ul class="hero-list"><li>Conversas</li><li>Pull requests</li><li>Briefing diário</li></ul></div>
+      <div><p class="local-status">Servidor local</p><p class="local-address"><code>127.0.0.1:4340</code></p><ul class="hero-list"><li>Conversas</li><li>Pull requests</li><li>Briefing diário</li></ul></div>
     </aside>
   </section>
 
@@ -52,7 +52,7 @@
       <div class="quickstart-card">
         <article class="quickstart-step"><span class="step-number">01</span><h3>Confira o Node.js</h3><p>Versão necessária: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>.</p></article>
         <article class="quickstart-step"><span class="step-number">02</span><h3>Inicie o Drizza</h3><p>Execute o pacote no terminal.</p><pre class="command-block"><code>npx drizza</code></pre></article>
-        <article class="quickstart-step"><span class="step-number">03</span><h3>Abra o app local</h3><p>Endereço padrão: <a href="http://127.0.0.1:4173/">http://127.0.0.1:4173/</a>.</p></article>
+        <article class="quickstart-step"><span class="step-number">03</span><h3>Abra o app local</h3><p>Endereço padrão: <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a>.</p></article>
       </div>
     </div>
   </section>
@@ -67,11 +67,11 @@
 
   <section class="section tinted" id="security">
     <div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">Segurança</p><h2>Seus dados ficam locais.</h2></div><p>O Drizza roda em loopback. Quando as integrações com provedores estiverem disponíveis, o processo local enviará as requisições diretamente a cada provedor; os tokens não serão enviados a um serviço hospedado pelo Drizza.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Segurança</p><h2>Seus dados ficam locais.</h2></div><p>O Drizza roda em loopback. O comportamento planejado para as integrações com provedores é que o processo local envie as requisições diretamente a cada provedor; os tokens não devem passar por serviços hospedados pelo Drizza.</p></div>
       <div class="security-strip">
         <article class="security-item"><h3>Apenas loopback</h3><p>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, não na interface da rede.</p></article>
         <article class="security-item"><h3>Banco local</h3><p>Os dados SQLite ficam em <code class="inline-code">~/.drizza/drizza.db</code>.</p></article>
-        <article class="security-item"><h3>Instruções de tokens em andamento</h3><p>A configuração de provedores será publicada em breve. Os tokens não serão gravados no SQLite, nos logs, nas respostas da API ou na interface. Os passos exatos para revogar o token MCP serão publicados quando o local do token for confirmado.</p></article>
+        <article class="security-item"><h3>Instruções de tokens em andamento</h3><p>A configuração de provedores será publicada em breve. O comportamento planejado é manter os tokens fora do SQLite, dos logs, das respostas da API e da interface. O arquivo local do token MCP e os passos para revogá-lo serão documentados quando o caminho for definido.</p></article>
       </div>
     </div>
   </section>
@@ -86,7 +86,7 @@
 <footer class="site-footer wrap">
   <a class="footer-brand" href="/pt/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
   <span>Código aberto · licença MIT</span>
-  <a href="https://github.com/grippado/drizza">Ver código-fonte</a>
+  <a href="https://github.com/drizza-dev/drizza">Ver código-fonte</a>
 </footer>
 </body>
 </html>
