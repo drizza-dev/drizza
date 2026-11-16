@@ -60,8 +60,8 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function closeResources(server: Server, database: DatabaseSync): void {
-  server.close(() => database.close());
+function closeResources(server: Server, closeDatabase: () => void): void {
+  server.close(() => closeDatabase());
 }
 
 function main(): void {
@@ -77,33 +77,40 @@ function main(): void {
   }
 
   let database: DatabaseSync | undefined;
+  let databaseClosed = false;
+  const closeDatabase = () => {
+    if (!database || databaseClosed) return;
+    database.close();
+    databaseClosed = true;
+  };
 
   try {
     database = openDatabase(options.databasePath);
     const server = createDrizzaServer({
       database,
-      distDirectory: fileURLToPath(new URL("../", import.meta.url)),
+      distDirectory: fileURLToPath(new URL("../../dist/", import.meta.url)),
       port: options.port,
     });
 
-    server.once("error", (error: NodeJS.ErrnoException) => {
+    server.on("error", (error: NodeJS.ErrnoException) => {
       if (error.code === "EADDRINUSE") {
         console.error(`A porta ${options.port} já está ocupada. Escolha outra com --port <porta>.`);
       } else {
-        console.error(`Não foi possível iniciar o servidor: ${error.message}`);
+        console.error(`Erro no servidor local: ${error.message}`);
       }
-      database?.close();
+      closeDatabase();
+      if (server.listening) server.close();
       process.exitCode = 1;
     });
 
     server.listen(options.port, "127.0.0.1", () => {
       console.log(`Drizza disponível em http://127.0.0.1:${options.port}`);
       console.log(`Banco SQLite: ${options.databasePath}`);
-      process.once("SIGINT", () => closeResources(server, database as DatabaseSync));
-      process.once("SIGTERM", () => closeResources(server, database as DatabaseSync));
+      process.once("SIGINT", () => closeResources(server, closeDatabase));
+      process.once("SIGTERM", () => closeResources(server, closeDatabase));
     });
   } catch (error) {
-    database?.close();
+    closeDatabase();
     console.error(`Não foi possível iniciar o Drizza: ${errorMessage(error)}`);
     process.exitCode = 1;
   }

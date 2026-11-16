@@ -45,6 +45,7 @@ export function openDatabase(databasePath: string): DatabaseSync {
   try {
     database.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
     migrate(database);
+    markInterruptedRuns(database);
     return database;
   } catch (error) {
     database.close();
@@ -111,6 +112,16 @@ function migrate(database: DatabaseSync): void {
     database.exec("ROLLBACK");
     throw error;
   }
+}
+
+function markInterruptedRuns(database: DatabaseSync): void {
+  database
+    .prepare(
+      `UPDATE sync_runs
+       SET status = 'error', finished_at = ?, error = ?
+       WHERE status = 'running'`,
+    )
+    .run(new Date().toISOString(), "Execução anterior interrompida antes da conclusão.");
 }
 
 function toSyncRun(row: SyncRunRow): SyncRun {

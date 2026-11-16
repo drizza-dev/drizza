@@ -9,7 +9,7 @@
     "node": "^22.13.0 || >=23.4.0"
   },
   "bin": {
-    "drizza": "./dist/cli/index.js"
+    "drizza": "./dist-node/cli/index.js"
   },
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6",
+    "@types/node": "~22.13.0",
     "typescript": "~7.0.2",
     "vite": "^8.3.6"
   },
