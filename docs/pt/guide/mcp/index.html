@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Status da integração MCP do Drizza e onde ficarão as instruções de configuração.">
+  <meta name="description" content="Registre o endpoint MCP local do Drizza no Claude Code e no Codex, rode o skill de briefing e gerencie o token local.">
   <meta name="theme-color" content="#f4f3ed">
-  <title>Integração com MCP · Drizza Docs</title>
+  <title>Conectar seu agente por MCP · Drizza Docs</title>
   <link rel="canonical" href="https://docs.drizza.dev/pt/guide/mcp/">
   <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/mcp/">
   <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/mcp/">
@@ -33,21 +33,143 @@
   </div>
 </header>
 <main id="main" class="page-main wrap">
-  <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="/pt/">Início</a><span aria-hidden="true">/</span><span>Guias</span><span aria-hidden="true">/</span><span aria-current="page">Integração com MCP</span></nav>
+  <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="/pt/">Início</a><span aria-hidden="true">/</span><span>Guias</span><span aria-hidden="true">/</span><span aria-current="page">Conectar seu agente</span></nav>
   <div class="guide-layout">
     <nav class="guide-nav" aria-label="Guias">
   <p class="eyebrow">Guias</p>
   <a href="/pt/guide/run-locally/">Rodar localmente</a> <a href="/pt/guide/accounts/">Contas</a> <a href="/pt/guide/github/">GitHub</a> <a href="/pt/guide/mcp/" aria-current="page">MCP</a> <a href="/pt/guide/contributing/">Contribuir</a>
 </nav>
     <article class="prose">
-      <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Integração com MCP</h1><p>A integração local com MCP ainda não está disponível.</p></header>
-      <div class="warning-box"><p><strong>Em breve.</strong> A integração MCP do Drizza ainda está em desenvolvimento. Ainda não há endpoint nem comandos de registro de agentes para seguir.</p></div>
+      <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Conectar seu agente por MCP</h1><p>Registre o endpoint MCP local do Drizza no Claude Code ou no Codex e deixe seu agente enviar o briefing do dia para o dashboard.</p></header>
+      <h2 id="how-it-works">Como funciona</h2>
+<p>O Drizza nunca chama um modelo. O seu próprio agente (Claude Code ou Codex) lê o seu dia com os acessos que já tem, escreve o briefing e o envia ao Drizza por um endpoint MCP local. O card <strong>Briefing de hoje</strong> se atualiza sozinho alguns segundos depois do envio.</p>
+<ul>
+  <li>O endpoint é <code class="inline-code">http://127.0.0.1:4340/mcp</code>, no mesmo servidor de loopback do dashboard. Ele segue a porta passada em <code class="inline-code">--port</code>.</li>
+  <li>Ele fala MCP sobre Streamable HTTP: toda mensagem é um <code class="inline-code">POST</code> em <code class="inline-code">/mcp</code>. <code class="inline-code">GET</code> e os outros métodos recebem <code class="inline-code">405</code>.</li>
+  <li>Todo <code class="inline-code">POST</code> precisa do token local como token Bearer no header <code class="inline-code">Authorization</code>.</li>
+</ul>
 
-<h2 id="planned-guide">O que este guia vai cobrir</h2>
-<p>Quando a integração estiver pronta, esta página explicará como conectar os agentes compatíveis, quais dados o token local pode acessar e como rotacioná-lo ou revogá-lo. O plano é manter o token MCP em um arquivo local na sua máquina; o caminho exato e os passos de revogação serão publicados com a integração.</p>
+<h2 id="start">Iniciar o Drizza e carregar o token</h2>
+<p>Inicie o Drizza como descrito em <a href="/pt/guide/run-locally/">Rodar localmente</a>:</p>
+<pre class="command-block"><code>node dist-node/cli/index.js</code></pre>
+<p>Na primeira vez, o Drizza cria um token aleatório e o guarda em <code class="inline-code">~/.drizza/mcp-token</code>, legível só pelo seu usuário. O arquivo do token fica sempre ao lado do banco: com <code class="inline-code">--db &lt;caminho&gt;</code>, ele fica no mesmo diretório desse banco. O Drizza nunca exibe o token.</p>
+<p>Depois de subir, o Drizza imprime o endpoint, onde está o token e os comandos de registro dos dois agentes, já com o caminho absoluto do seu arquivo de token e a porta em uso. Com os valores padrão, eles batem com os comandos desta página.</p>
+<p>No shell que vai abrir o Claude Code ou o Codex, carregue o token numa variável:</p>
+<pre class="command-block"><code>export DRIZZA_MCP_TOKEN=$(cat ~/.drizza/mcp-token)</code></pre>
+<p>Os agentes guardam na configuração só uma referência a <code class="inline-code">DRIZZA_MCP_TOKEN</code> e leem o valor quando se conectam. Exporte a variável em todo shell que abre o agente, por exemplo pelo perfil do seu shell.</p>
+<div class="warning-box"><p><strong>Mantenha o token fora da linha de comando.</strong> Não registre com <code class="inline-code">--header "Authorization: Bearer $(cat ...)"</code>. O token apareceria na lista de processos e poderia ficar em texto puro na configuração do agente.</p></div>
 
-<h2 id="until-then">Enquanto isso</h2>
-<p>Use o <a href="/pt/guide/run-locally/">guia para rodar localmente</a> para ver as instruções atuais de instalação. Não copie configurações de uma versão antiga do Drizza nem de outro projeto.</p>
+<h2 id="claude-code">Registrar no Claude Code</h2>
+<pre class="command-block"><code>claude mcp add --transport http drizza http://127.0.0.1:4340/mcp --header 'Authorization: Bearer ${DRIZZA_MCP_TOKEN}'</code></pre>
+<p>Mantenha as aspas simples: com elas, o Claude Code guarda a referência <code class="inline-code">${DRIZZA_MCP_TOKEN}</code>, não o token. Ele lê a variável a cada conexão.</p>
+<p>Por padrão, <code class="inline-code">claude mcp add</code> registra o servidor só para o diretório em que você roda o comando. Para deixar o Drizza disponível em todos os projetos, acrescente <code class="inline-code">--scope user</code>:</p>
+<pre class="command-block"><code>claude mcp add --scope user --transport http drizza http://127.0.0.1:4340/mcp --header 'Authorization: Bearer ${DRIZZA_MCP_TOKEN}'</code></pre>
+<p>Com o Drizza rodando, confira a conexão:</p>
+<pre class="command-block"><code>claude mcp list</code></pre>
+<p>A linha do <code class="inline-code">drizza</code> deve dizer <strong>Connected</strong>. As tools aparecem no Claude Code como <code class="inline-code">mcp__drizza__get_today</code>, <code class="inline-code">mcp__drizza__push_briefing</code> e <code class="inline-code">mcp__drizza__push_items</code>.</p>
+
+<h2 id="codex">Registrar no Codex</h2>
+<pre class="command-block"><code>codex mcp add drizza --url http://127.0.0.1:4340/mcp --bearer-token-env-var DRIZZA_MCP_TOKEN</code></pre>
+<p>O Codex guarda o servidor em <code class="inline-code">~/.codex/config.toml</code> com o nome da variável, não o valor:</p>
+<pre class="command-block"><code>[mcp_servers.drizza]
+url = "http://127.0.0.1:4340/mcp"
+bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
+<p>Confira o registro:</p>
+<pre class="command-block"><code>codex mcp get drizza</code></pre>
+<p>Isso mostra a configuração guardada; não testa a conexão.</p>
+<h3 id="codex-exec">Rodar o Codex em modo não interativo</h3>
+<p>No <code class="inline-code">codex exec</code>, não há ninguém para aprovar as chamadas de tools, então o Codex bloqueia as chamadas às tools do Drizza e o briefing não é enviado. Para liberá-las, acrescente esta linha em <code class="inline-code">[mcp_servers.drizza]</code> no <code class="inline-code">~/.codex/config.toml</code>:</p>
+<pre class="command-block"><code>default_tools_approval_mode = "approve"</code></pre>
+<p>Isso aprova todas as tools do Drizza sem perguntar, também nas sessões interativas. Deixe de fora se preferir aprovar cada chamada.</p>
+
+<h2 id="skill">Rodar o skill de briefing</h2>
+<p>O repositório traz um skill, <code class="inline-code">skills/drizza-briefing/SKILL.md</code>, que ensina os dois agentes a montar o briefing. Ele lê o que o Drizza já tem com <code class="inline-code">get_today</code>, coleta o dia nas fontes que o agente já alcança (GitHub pelo <code class="inline-code">gh</code>, e Slack, Linear ou outras só se o agente já tiver uma ferramenta para elas) e envia o resultado com <code class="inline-code">push_briefing</code>. O agente nunca lê o arquivo do token nem o banco.</p>
+<p>A partir da raiz do seu clone, copie o skill para a pasta de skills de cada agente:</p>
+<pre class="command-block"><code>mkdir -p ~/.claude/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.claude/skills/drizza-briefing/</code></pre>
+<pre class="command-block"><code>mkdir -p ~/.codex/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.codex/skills/drizza-briefing/</code></pre>
+<p>Depois rode no Claude Code:</p>
+<pre class="command-block"><code>/drizza-briefing</code></pre>
+<p>Ou no Codex:</p>
+<pre class="command-block"><code>$drizza-briefing</code></pre>
+<p>O botão <strong>Copiar comando do briefing</strong> do dashboard copia o comando do Claude Code. Quando o agente termina, o briefing aparece no card <strong>Briefing de hoje</strong> com links para as fontes.</p>
+
+<h2 id="tools">Tools</h2>
+<p>As tools seguem a versão <code class="inline-code">1</code> do contrato. Toda chamada envia <code class="inline-code">"contract_version": "1"</code>. As entradas são fechadas: campo que o contrato não define é recusado. O Drizza informa a versão do contrato no <code class="inline-code">_meta</code> da resposta do <code class="inline-code">initialize</code> (ou do <code class="inline-code">server/discover</code>), na chave <code class="inline-code">dev.drizza/contract_version</code>; o cliente deve conferi-la antes de enviar um campo de um contrato mais novo. Uma chamada que falha na validação devolve um erro da tool com o caminho de cada campo inválido, para o agente corrigir o payload e tentar de novo.</p>
+
+<h3 id="get-today">get_today</h3>
+<p>Lê o que o Drizza tem para um dia. Envie só <code class="inline-code">contract_version</code> para ler hoje, ou acrescente <code class="inline-code">date</code> como <code class="inline-code">YYYY-MM-DD</code>. Sem <code class="inline-code">date</code>, hoje é a data local da máquina que roda o Drizza, não UTC.</p>
+<pre class="command-block"><code>{ "contract_version": "1" }</code></pre>
+<p>Devolve <code class="inline-code">date</code>, <code class="inline-code">briefing</code> (o briefing guardado, ou <code class="inline-code">null</code>) e <code class="inline-code">items</code>. <code class="inline-code">items</code> lista só o que um agente enviou ou enriqueceu por <code class="inline-code">push_items</code> naquele dia local, do mais recente ao mais antigo, até 200. Um sync do GitHub sozinho nunca coloca um item ali.</p>
+<p>Cada item de <code class="inline-code">items</code> tem <code class="inline-code">source</code>, <code class="inline-code">kind</code>, <code class="inline-code">external_id</code>, <code class="inline-code">origin</code> (<code class="inline-code">agent</code> para itens que você enviou, <code class="inline-code">sync</code> para pull requests sincronizadas que você enriqueceu), <code class="inline-code">title</code> e <code class="inline-code">received_at</code> (quando o Drizza o guardou pela última vez). <code class="inline-code">url</code>, <code class="inline-code">summary</code> e <code class="inline-code">updated_at</code> só aparecem quando têm valor.</p>
+
+<h3 id="push-briefing">push_briefing</h3>
+<p>Guarda o briefing de um dia. Um segundo envio para a mesma <code class="inline-code">date</code> substitui o anterior, e a resposta indica isso em <code class="inline-code">replaced</code>.</p>
+<ul>
+  <li><code class="inline-code">date</code> (<code class="inline-code">YYYY-MM-DD</code>), <code class="inline-code">agent</code> (1 a 64 caracteres), <code class="inline-code">headline</code> (1 a 200) e <code class="inline-code">sections</code> (1 a 12) são obrigatórios.</li>
+  <li>Cada seção tem um <code class="inline-code">title</code> (1 a 120 caracteres) e de 1 a 30 <code class="inline-code">bullets</code>. Cada bullet tem um <code class="inline-code">text</code> (1 a 1000) e, opcionalmente, <code class="inline-code">links</code> (até 10) e <code class="inline-code">item_refs</code> (até 10).</li>
+  <li>Um link tem exatamente <code class="inline-code">url</code>, <code class="inline-code">label</code> e <code class="inline-code">source</code> (<code class="inline-code">github</code>, <code class="inline-code">slack</code> ou <code class="inline-code">other</code>). A URL precisa ser um endereço absoluto <code class="inline-code">http://</code> ou <code class="inline-code">https://</code> sem usuário nem senha. O Drizza a guarda normalizada, e a URL normalizada ainda precisa caber em 2048 caracteres.</li>
+  <li>Um <code class="inline-code">item_ref</code> aponta para um item pelos mesmos <code class="inline-code">source</code> e <code class="inline-code">external_id</code> usados em <code class="inline-code">push_items</code>. Quando o <code class="inline-code">source</code> é exatamente <code class="inline-code">github</code>, o <code class="inline-code">external_id</code> é convertido para minúsculas, como em <code class="inline-code">push_items</code>, para a referência casar com o item que o <code class="inline-code">get_today</code> devolve.</li>
+</ul>
+<p>Devolve <code class="inline-code">briefing_id</code>, <code class="inline-code">date</code> e <code class="inline-code">replaced</code>.</p>
+
+<h3 id="push-items">push_items</h3>
+<p>Guarda itens como conversas ou pull requests: <code class="inline-code">items</code> leva de 1 a 100 deles por chamada. Cada item tem:</p>
+<ul>
+  <li><code class="inline-code">source</code> (obrigatório, 1 a 32 caracteres), por exemplo <code class="inline-code">github</code> ou <code class="inline-code">slack</code>.</li>
+  <li><code class="inline-code">kind</code> (obrigatório, 1 a 32 caracteres), por exemplo <code class="inline-code">pull_request</code> ou <code class="inline-code">thread</code>.</li>
+  <li><code class="inline-code">external_id</code> (obrigatório, 1 a 256 caracteres), o identificador do item dentro da fonte.</li>
+  <li><code class="inline-code">title</code> (obrigatório, 1 a 300 caracteres).</li>
+  <li><code class="inline-code">url</code> (opcional, uma URL absoluta <code class="inline-code">http://</code> ou <code class="inline-code">https://</code> de até 2048 caracteres).</li>
+  <li><code class="inline-code">summary</code> (opcional, 1 a 2000 caracteres), o seu resumo curto.</li>
+  <li><code class="inline-code">updated_at</code> (opcional), quando o item mudou pela última vez na fonte, como timestamp RFC 3339.</li>
+</ul>
+<p>Nenhum outro campo é aceito. Como o Drizza os guarda:</p>
+<ul>
+  <li><strong>Upsert que mescla.</strong> Os itens são casados por <code class="inline-code">source</code> e <code class="inline-code">external_id</code>. Enviar uma chave que já existe atualiza o item, e um campo opcional que você omite mantém o valor guardado. Ainda não dá para limpar um campo.</li>
+  <li><strong>Maiúsculas na chave.</strong> O <code class="inline-code">source</code> diferencia maiúsculas de minúsculas. Só quando ele é exatamente <code class="inline-code">github</code> o <code class="inline-code">external_id</code> é casado sem diferenciar maiúsculas (e guardado em minúsculas), para qualquer <code class="inline-code">kind</code>. <code class="inline-code">GitHub</code> ou qualquer outra grafia é outra fonte.</li>
+  <li><strong>Pull requests do GitHub.</strong> Pull requests sincronizadas do GitHub usam <code class="inline-code">source</code> <code class="inline-code">github</code>, <code class="inline-code">kind</code> <code class="inline-code">pull_request</code> e <code class="inline-code">external_id</code> <code class="inline-code">owner/repo#number</code>. Enviar essa chave acrescenta o seu <code class="inline-code">summary</code> à pull request sincronizada e mantém título, URL, tipo e data de atualização como vieram do sync.</li>
+  <li><strong>Adotado pelo sync.</strong> Se o sync do GitHub depois trouxer um item que você enviou com essa chave, ele assume o item: tipo, título, URL e data de atualização passam a ser os do sync, e o seu resumo é mantido.</li>
+  <li><strong>Mantido depois do sync.</strong> Se uma pull request que você enriqueceu ou enviou sai do sync do GitHub, o Drizza a mantém como item seu, com o seu resumo.</li>
+  <li><strong>URLs seguras.</strong> URL com usuário ou senha é recusada. As URLs guardadas são normalizadas, e a URL normalizada ainda precisa caber em 2048 caracteres.</li>
+</ul>
+<p>Devolve <code class="inline-code">inserted</code> e <code class="inline-code">updated</code>, que somam o número de itens enviados.</p>
+
+<h2 id="token">Achar, rotacionar ou revogar o token</h2>
+<p>O token fica em <code class="inline-code">~/.drizza/mcp-token</code>, ou ao lado do banco passado em <code class="inline-code">--db</code>. O Drizza se recusa a subir se o arquivo puder ser lido por outros usuários; corrija com <code class="inline-code">chmod 600</code> ou apague o arquivo para gerar outro.</p>
+<p>Para rotacionar o token:</p>
+<ol>
+  <li>Pare o Drizza.</li>
+  <li>Apague o arquivo do token:
+<pre class="command-block"><code>rm ~/.drizza/mcp-token</code></pre></li>
+  <li>Inicie o Drizza de novo. Ele cria um token novo, e o antigo para de funcionar.</li>
+  <li>Carregue o token novo no shell que abre o agente:
+<pre class="command-block"><code>export DRIZZA_MCP_TOKEN=$(cat ~/.drizza/mcp-token)</code></pre></li>
+  <li>Reinicie o Claude Code ou o Codex a partir desse shell. Não é preciso registrar o servidor de novo, porque os agentes guardam só o nome da variável.</li>
+</ol>
+<p>O Drizza lê o arquivo do token só ao subir, então o token antigo continua valendo até o Drizza reiniciar.</p>
+<p>Para tirar o Drizza de um agente, remova o registro do servidor:</p>
+<pre class="command-block"><code>claude mcp remove drizza</code></pre>
+<pre class="command-block"><code>codex mcp remove drizza</code></pre>
+
+<h2 id="endpoint-security">Segurança do endpoint</h2>
+<ul>
+  <li>O endpoint divide o servidor com o dashboard, que escuta só em <code class="inline-code">127.0.0.1</code>. O Drizza confere cada requisição a <code class="inline-code">/mcp</code> nesta ordem:
+<ol>
+  <li><strong>Host.</strong> Um <code class="inline-code">Host</code> que não é o endereço local do Drizza recebe <code class="inline-code">403</code>.</li>
+  <li><strong>Origin.</strong> O header <code class="inline-code">Origin</code> é opcional, porque clientes MCP de linha de comando não o enviam. Quando presente e diferente do endereço local do Drizza, a resposta é <code class="inline-code">403</code>, então uma página web aberta no seu browser não consegue chamar o endpoint.</li>
+  <li><strong>Método.</strong> Qualquer método que não seja <code class="inline-code">POST</code> recebe <code class="inline-code">405</code>.</li>
+  <li><strong>Token.</strong> Todo <code class="inline-code">POST</code> que passou pelas conferências acima precisa do token Bearer. Sem ele, ou com um token errado, o Drizza responde <code class="inline-code">401</code>.</li>
+</ol></li>
+  <li>O token nunca é gravado no banco, em logs, em respostas da API nem no dashboard.</li>
+</ul>
+
+<h2 id="troubleshooting">Solução de problemas</h2>
+<h3 id="unauthorized">O agente não conecta (401)</h3>
+<p>O <code class="inline-code">claude mcp list</code> informa que o servidor recusou o header <code class="inline-code">Authorization</code> (HTTP 401) e pode avisar que <code class="inline-code">DRIZZA_MCP_TOKEN</code> está faltando. Exporte a variável como mostrado acima no shell que abre o agente e reinicie-o. Se você rotacionou o token, exporte de novo.</p>
+<h3 id="not-running">As tools não aparecem</h3>
+<p>O Drizza precisa estar rodando quando o agente sobe. Inicie o Drizza, confira se a porta bate com a URL registrada e reinicie o agente. Se você iniciou o Drizza com <code class="inline-code">--port</code>, registre a URL que ele imprime.</p>
+<h3 id="blocked">O Codex não envia o briefing</h3>
+<p>No <code class="inline-code">codex exec</code>, acrescente <code class="inline-code">default_tools_approval_mode = "approve"</code> como descrito em <a href="#codex-exec">Rodar o Codex em modo não interativo</a>.</p>
       <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/github/">← GitHub</a><a href="/pt/guide/contributing/">Contribuir →</a></nav>
     </article>
   </div>

@@ -61,7 +61,7 @@
 <ul>
   <li>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, então outros dispositivos da sua rede não conseguem acessá-lo.</li>
   <li>A integração com o GitHub usa as suas credenciais a partir do processo local e envia as requisições direto ao GitHub. O banco SQLite registra só a origem do token, nunca o valor. Veja <a href="/pt/guide/github/">Conectar o GitHub</a>.</li>
-  <li>Os passos exatos para revogar o token MCP serão publicados no guia de MCP quando o local do token for definido.</li>
+  <li>O token MCP dos agentes é criado na primeira execução em <code class="inline-code">~/.drizza/mcp-token</code>, legível só pelo seu usuário. Para achar, rotacionar ou revogar o token, veja <a href="/pt/guide/mcp/#token">o guia de MCP</a>.</li>
 </ul>
 
 <h2 id="integrations">Integrações</h2>
