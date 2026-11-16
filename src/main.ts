@@ -1,5 +1,41 @@
 import './style.css'
 
+type ThemeFamily = 'drizza' | 'violeeter'
+type Appearance = 'light' | 'dark'
+type LayoutWidth = '100' | '70' | '50'
+
+const readPreference = (key: string): string | null => {
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+const savePreference = (key: string, value: string): void => {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {}
+}
+
+const savedFamily = readPreference('drizza-theme-family')
+const savedAppearance = readPreference('drizza-appearance')
+const savedLayoutWidth = readPreference('drizza-layout-width')
+const initialThemeFamily: ThemeFamily = savedFamily === 'violeeter' ? 'violeeter' : 'drizza'
+const initialAppearance: Appearance = savedAppearance === 'dark' ? 'dark' : 'light'
+const initialLayoutWidth: LayoutWidth = savedLayoutWidth === '70' || savedLayoutWidth === '50' ? savedLayoutWidth : '100'
+
+document.documentElement.dataset.themeFamily = initialThemeFamily
+document.documentElement.dataset.appearance = initialAppearance
+document.documentElement.dataset.layoutWidth = initialLayoutWidth
+
+const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+const themeColors: Record<ThemeFamily, Record<Appearance, string>> = {
+  drizza: { light: '#F4F3ED', dark: '#121B16' },
+  violeeter: { light: '#FAF8FE', dark: '#24203F' },
+}
+themeColor?.setAttribute('content', themeColors[initialThemeFamily][initialAppearance])
+
 const app = document.querySelector<HTMLDivElement>('#app')
 
 if (!app) {
@@ -21,6 +57,31 @@ app.innerHTML = [
   '    </a>',
   '    <p class="brand-promise">seu dia, no seu rumo</p>',
   '    <div class="local-state"><span class="state-dot"></span><span>Local · sem sincronização</span></div>',
+  '    <div class="theme-controls">',
+  '      <label class="theme-family-picker">',
+  '        <span class="visually-hidden">Tema do Drizza</span>',
+  '        <select id="theme-family-select">',
+  '          <option value="drizza">Drizza</option>',
+  '          <option value="violeeter">Violeeter</option>',
+  '        </select>',
+  '      </label>',
+  '      <div class="appearance-picker" role="group" aria-label="Aparência">',
+  '        <button class="appearance-button" type="button" data-appearance-choice="light" aria-label="Tema claro" title="Tema claro">',
+  '          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.5-7.5-1.4 1.4m-10.2 10.2-1.4 1.4m14.4 0-1.4-1.4M6.1 6.1 4.7 4.7"></path></svg>',
+  '        </button>',
+  '        <button class="appearance-button" type="button" data-appearance-choice="dark" aria-label="Tema escuro" title="Tema escuro">',
+  '          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8.6 8.6 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z"></path></svg>',
+  '        </button>',
+  '      </div>',
+  '      <label class="layout-width-picker">',
+  '        <span class="visually-hidden">Largura do Drizza</span>',
+  '        <select id="layout-width-select">',
+  '          <option value="100">100%</option>',
+  '          <option value="70">70%</option>',
+  '          <option value="50">50%</option>',
+  '        </select>',
+  '      </label>',
+  '    </div>',
   '  </header>',
   '',
   '  <main id="home">',
@@ -102,6 +163,51 @@ const todayLabel = document.querySelector<HTMLElement>('#today')
 const feedback = document.querySelector<HTMLParagraphElement>('#feedback')
 const syncButton = document.querySelector<HTMLButtonElement>('#sync-button')
 const briefButton = document.querySelector<HTMLButtonElement>('#brief-button')
+const themeFamilySelect = document.querySelector<HTMLSelectElement>('#theme-family-select')
+const layoutWidthSelect = document.querySelector<HTMLSelectElement>('#layout-width-select')
+const appearanceButtons = document.querySelectorAll<HTMLButtonElement>('[data-appearance-choice]')
+let selectedFamily = initialThemeFamily
+let selectedAppearance = initialAppearance
+
+const applyTheme = (family: ThemeFamily, appearance: Appearance): void => {
+  selectedFamily = family
+  selectedAppearance = appearance
+  document.documentElement.dataset.themeFamily = family
+  document.documentElement.dataset.appearance = appearance
+  themeColor?.setAttribute('content', themeColors[family][appearance])
+  savePreference('drizza-theme-family', family)
+  savePreference('drizza-appearance', appearance)
+  if (themeFamilySelect) themeFamilySelect.value = family
+  appearanceButtons.forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.appearanceChoice === appearance))
+  })
+}
+
+themeFamilySelect?.addEventListener('change', () => {
+  applyTheme(themeFamilySelect.value === 'violeeter' ? 'violeeter' : 'drizza', selectedAppearance)
+})
+
+appearanceButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    const nextAppearance: Appearance = button.dataset.appearanceChoice === 'dark' ? 'dark' : 'light'
+    applyTheme(selectedFamily, nextAppearance)
+  })
+})
+
+if (themeFamilySelect) {
+  applyTheme(initialThemeFamily, initialAppearance)
+}
+
+if (layoutWidthSelect) {
+  layoutWidthSelect.value = initialLayoutWidth
+  layoutWidthSelect.addEventListener('change', () => {
+    const nextWidth: LayoutWidth = layoutWidthSelect.value === '70' || layoutWidthSelect.value === '50'
+      ? layoutWidthSelect.value
+      : '100'
+    document.documentElement.dataset.layoutWidth = nextWidth
+    savePreference('drizza-layout-width', nextWidth)
+  })
+}
 
 if (todayLabel) {
   todayLabel.textContent = today.toLocaleUpperCase('pt-BR')
