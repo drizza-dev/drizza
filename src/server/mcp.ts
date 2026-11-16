@@ -343,7 +343,7 @@ function describeIssues(issues: SchemaIssue[]): string {
   const lines = issues.slice(0, maxReportedIssues).map((issue) => `${issue.path} ${issue.message}`);
   const hidden = issues.length - maxReportedIssues;
   const more =
-    hidden <= 0 ? [] : issues.length >= maxSchemaIssues ? [`and at least ${hidden} more`] : [`and ${hidden} more`];
+    hidden <= 0 ? [] : issues.length > maxSchemaIssues ? [`and at least ${hidden} more`] : [`and ${hidden} more`];
   return ["Invalid arguments:", ...lines, ...more].join("\n");
 }
 

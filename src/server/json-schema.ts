@@ -35,7 +35,7 @@ export function compileSchema(schema: unknown): SchemaValidator {
   return (value) => {
     const issues: SchemaIssue[] = [];
     validate(schema as SchemaObject, value, "", issues, patterns);
-    return issues.slice(0, maxSchemaIssues);
+    return issues;
   };
 }
 
@@ -97,7 +97,7 @@ function validate(
   issues: SchemaIssue[],
   patterns: Map<string, RegExp>,
 ): void {
-  if (issues.length >= maxSchemaIssues) return;
+  if (issues.length > maxSchemaIssues) return;
 
   const at = path || "/";
 
@@ -139,7 +139,7 @@ function validate(
       return;
     }
     if (isObject(schema.items)) {
-      for (let index = 0; index < value.length && issues.length < maxSchemaIssues; index += 1) {
+      for (let index = 0; index < value.length && issues.length <= maxSchemaIssues; index += 1) {
         validate(schema.items as SchemaObject, value[index], `${path}/${index}`, issues, patterns);
       }
     }
@@ -153,7 +153,7 @@ function validate(
     }
 
     for (const [name, child] of Object.entries(value)) {
-      if (issues.length >= maxSchemaIssues) break;
+      if (issues.length > maxSchemaIssues) break;
       const childSchema = Object.hasOwn(properties, name) ? properties[name] : undefined;
       if (isObject(childSchema)) {
         validate(childSchema, child, `${path}/${escapePointer(name)}`, issues, patterns);
