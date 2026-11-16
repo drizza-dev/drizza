@@ -2,14 +2,14 @@
 
 A local dashboard for your daily work context: the pull requests waiting on you, the ones you have open, and a daily briefing that your own coding agent writes and delivers through MCP.
 
-Everything runs on your machine. Drizza keeps a local SQLite database, never stores your GitHub token, and never calls a language model: your agent (Claude Code or Codex) does the writing.
+Everything runs on your machine. Drizza keeps a local SQLite database, never stores your GitHub token, and never calls a language model: your agent (Claude Code or Codex) does the writing. The only outbound call is the GitHub sync you trigger.
 
 Docs: [docs.drizza.dev](https://docs.drizza.dev) ([pt-BR](https://docs.drizza.dev/pt/)).
 
 ## Requirements
 
 - Node.js 22.13+ or 23.4+ (Drizza uses the built in `node:sqlite`).
-- For GitHub: the `gh` CLI signed in, or a fine grained token in `DRIZZA_GITHUB_TOKEN`.
+- For GitHub: the `gh` CLI signed in, or a fine grained token in `DRIZZA_GITHUB_TOKEN` (used only when `gh` returns no token).
 
 ## Run it
 
@@ -51,7 +51,7 @@ pnpm build
 ```
 
 ```sh
-node dist-node/cli/index.js --port 4399 --db /tmp/drizza-dev.db
+node dist-node/cli/index.js --port 4399 --db ~/.drizza-dev/drizza.db
 ```
 
 `pnpm dev` serves only the Vite UI, without the local API. See [CONTRIBUTING](https://github.com/drizza-dev/.github/blob/main/CONTRIBUTING.md).
