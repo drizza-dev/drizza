@@ -1,32 +1,61 @@
 # Drizza
 
-Dashboard local para reunir contexto de trabalho agêntico: conversas, PRs e um briefing diário com links para as fontes.
+A local dashboard for your daily work context: the pull requests waiting on you, the ones you have open, and a daily briefing that your own coding agent writes and delivers through MCP.
 
-## Começar
+Everything runs on your machine. Drizza keeps a local SQLite database, never stores your GitHub token, and never calls a language model: your agent (Claude Code or Codex) does the writing.
 
-- Instale as dependências com pnpm install.
-- Inicie o servidor de desenvolvimento com pnpm run dev.
+Docs: [docs.drizza.dev](https://docs.drizza.dev) ([pt-BR](https://docs.drizza.dev/pt/)).
 
-## Estado deste starter
+## Requirements
 
-Este é um scaffold de interface em TypeScript com Vite e o template vanilla-ts. A tela mostra o recorte inicial do produto e estados vazios honestos. O GitHub já sincroniza PRs abertas (revisões pedidas e autoria) para o banco local em SQLite, e o briefing chega pelo endpoint MCP local e aparece no card "Briefing de hoje" sem recarregar a página. Quem escreve o briefing é o seu agente, pelo skill abaixo; o Drizza não chama nenhum modelo. Slack ainda não está conectado.
+- Node.js 22.13+ or 23.4+ (Drizza uses the built in `node:sqlite`).
+- For GitHub: the `gh` CLI signed in, or a fine grained token in `DRIZZA_GITHUB_TOKEN`.
 
-O uso de Vite e TypeScript aqui serve para iniciar a interface. Não decide o runtime local final, a autenticação dos providers nem o modelo de sincronização; esses pontos serão refinados antes de integrar dados reais.
-
-## Briefing pelo seu agente
-
-O skill [`skills/drizza-briefing/SKILL.md`](skills/drizza-briefing/SKILL.md) ensina o Claude Code e o Codex a ler o dia (GitHub via `gh` e o que mais o agente já tiver conectado), montar o briefing e enviá-lo pelas tools `get_today` e `push_briefing` do MCP local. Antes, registre o MCP com os comandos que o `drizza` imprime ao subir. No Codex em modo não interativo (`codex exec`), a chamada às tools do MCP precisa estar aprovada na configuração do servidor `drizza`, senão o Codex bloqueia o envio.
-
-Para instalar, copie o arquivo para a pasta de skills de cada agente, a partir da raiz do repositório:
+## Run it
 
 ```sh
-mkdir -p ~/.claude/skills/drizza-briefing && cp skills/drizza-briefing/SKILL.md ~/.claude/skills/drizza-briefing/
+npx drizza
+```
+
+Drizza starts at `http://127.0.0.1:4340` and keeps its data in `~/.drizza`. Use `--port` and `--db` to change either. On start it prints the local MCP endpoint and the commands to register it in Claude Code and Codex; the MCP token stays in a file and is never printed.
+
+## What works today
+
+- **GitHub:** press Sync Now to pull your open pull requests (reviews requested from you and the ones you authored).
+- **MCP:** a local endpoint at `/mcp` with a bearer token and three tools: `push_briefing`, `push_items` and `get_today`.
+- **Briefing:** the `drizza-briefing` skill teaches your agent to read your day, write the briefing and push it. It shows up in the dashboard without a reload.
+- **Slack:** not yet.
+
+## Briefing skill
+
+The skill ships with the package and lives in [`skills/drizza-briefing/SKILL.md`](skills/drizza-briefing/SKILL.md). Copy it into your agent's skills folder:
+
+```sh
+mkdir -p ~/.claude/skills/drizza-briefing && curl -fsSL https://raw.githubusercontent.com/drizza-dev/drizza/main/skills/drizza-briefing/SKILL.md -o ~/.claude/skills/drizza-briefing/SKILL.md
 ```
 
 ```sh
-mkdir -p ~/.codex/skills/drizza-briefing && cp skills/drizza-briefing/SKILL.md ~/.codex/skills/drizza-briefing/
+mkdir -p ~/.codex/skills/drizza-briefing && curl -fsSL https://raw.githubusercontent.com/drizza-dev/drizza/main/skills/drizza-briefing/SKILL.md -o ~/.codex/skills/drizza-briefing/SKILL.md
 ```
 
-Depois rode `/drizza-briefing` no Claude Code ou `$drizza-briefing` no Codex. O botão "Copiar comando do briefing" da tela copia esse comando.
+Then run `/drizza-briefing` in Claude Code or `$drizza-briefing` in Codex. In non interactive Codex (`codex exec`), the drizza MCP tools must be approved in its config, or Codex blocks the push. The [MCP guide](https://docs.drizza.dev/guide/mcp/) has the full setup.
 
-Não há dados de exemplo nem credenciais no repositório.
+## Develop
+
+```sh
+pnpm install
+```
+
+```sh
+pnpm build
+```
+
+```sh
+node dist-node/cli/index.js --port 4399 --db /tmp/drizza-dev.db
+```
+
+`pnpm dev` serves only the Vite UI, without the local API. See [CONTRIBUTING](https://github.com/drizza-dev/.github/blob/main/CONTRIBUTING.md).
+
+## License
+
+MIT
