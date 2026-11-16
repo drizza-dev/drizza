@@ -46,7 +46,7 @@
 <ul>
   <li>O endpoint é <code class="inline-code">http://127.0.0.1:4340/mcp</code>, no mesmo servidor de loopback do dashboard. Ele segue a porta passada em <code class="inline-code">--port</code>.</li>
   <li>Ele fala MCP sobre Streamable HTTP: toda mensagem é um <code class="inline-code">POST</code> em <code class="inline-code">/mcp</code>. <code class="inline-code">GET</code> e os outros métodos recebem <code class="inline-code">405</code>.</li>
-  <li>Toda requisição precisa do token local como token Bearer no header <code class="inline-code">Authorization</code>.</li>
+  <li>Todo <code class="inline-code">POST</code> precisa do token local como token Bearer no header <code class="inline-code">Authorization</code>.</li>
 </ul>
 
 <h2 id="start">Iniciar o Drizza e carregar o token</h2>
@@ -100,6 +100,7 @@ bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
 <p>Lê o que o Drizza tem para um dia. Envie só <code class="inline-code">contract_version</code> para ler hoje, ou acrescente <code class="inline-code">date</code> como <code class="inline-code">YYYY-MM-DD</code>. Sem <code class="inline-code">date</code>, hoje é a data local da máquina que roda o Drizza, não UTC.</p>
 <pre class="command-block"><code>{ "contract_version": "1" }</code></pre>
 <p>Devolve <code class="inline-code">date</code>, <code class="inline-code">briefing</code> (o briefing guardado, ou <code class="inline-code">null</code>) e <code class="inline-code">items</code>. <code class="inline-code">items</code> lista só o que um agente enviou ou enriqueceu por <code class="inline-code">push_items</code> naquele dia local, do mais recente ao mais antigo, até 200. Um sync do GitHub sozinho nunca coloca um item ali.</p>
+<p>Cada item de <code class="inline-code">items</code> tem <code class="inline-code">source</code>, <code class="inline-code">kind</code>, <code class="inline-code">external_id</code>, <code class="inline-code">origin</code> (<code class="inline-code">agent</code> para itens que você enviou, <code class="inline-code">sync</code> para pull requests sincronizadas que você enriqueceu), <code class="inline-code">title</code> e <code class="inline-code">received_at</code> (quando o Drizza o guardou pela última vez). <code class="inline-code">url</code>, <code class="inline-code">summary</code> e <code class="inline-code">updated_at</code> só aparecem quando têm valor.</p>
 
 <h3 id="push-briefing">push_briefing</h3>
 <p>Guarda o briefing de um dia. Um segundo envio para a mesma <code class="inline-code">date</code> substitui o anterior, e a resposta indica isso em <code class="inline-code">replaced</code>.</p>
@@ -112,7 +113,17 @@ bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
 <p>Devolve <code class="inline-code">briefing_id</code>, <code class="inline-code">date</code> e <code class="inline-code">replaced</code>.</p>
 
 <h3 id="push-items">push_items</h3>
-<p>Guarda até 100 itens por chamada, como conversas ou pull requests. Cada item precisa de <code class="inline-code">source</code>, <code class="inline-code">kind</code>, <code class="inline-code">external_id</code> e <code class="inline-code">title</code>, e pode trazer <code class="inline-code">url</code>, <code class="inline-code">summary</code> e <code class="inline-code">updated_at</code> (um timestamp RFC 3339).</p>
+<p>Guarda itens como conversas ou pull requests: <code class="inline-code">items</code> leva de 1 a 100 deles por chamada. Cada item tem:</p>
+<ul>
+  <li><code class="inline-code">source</code> (obrigatório, 1 a 32 caracteres), por exemplo <code class="inline-code">github</code> ou <code class="inline-code">slack</code>.</li>
+  <li><code class="inline-code">kind</code> (obrigatório, 1 a 32 caracteres), por exemplo <code class="inline-code">pull_request</code> ou <code class="inline-code">thread</code>.</li>
+  <li><code class="inline-code">external_id</code> (obrigatório, 1 a 256 caracteres), o identificador do item dentro da fonte.</li>
+  <li><code class="inline-code">title</code> (obrigatório, 1 a 300 caracteres).</li>
+  <li><code class="inline-code">url</code> (opcional, uma URL absoluta <code class="inline-code">http://</code> ou <code class="inline-code">https://</code> de até 2048 caracteres).</li>
+  <li><code class="inline-code">summary</code> (opcional, 1 a 2000 caracteres), o seu resumo curto.</li>
+  <li><code class="inline-code">updated_at</code> (opcional), quando o item mudou pela última vez na fonte, como timestamp RFC 3339.</li>
+</ul>
+<p>Nenhum outro campo é aceito. Como o Drizza os guarda:</p>
 <ul>
   <li><strong>Upsert que mescla.</strong> Os itens são casados por <code class="inline-code">source</code> e <code class="inline-code">external_id</code>. Enviar uma chave que já existe atualiza o item, e um campo opcional que você omite mantém o valor guardado. Ainda não dá para limpar um campo.</li>
   <li><strong>Maiúsculas na chave.</strong> O <code class="inline-code">source</code> diferencia maiúsculas de minúsculas. Só quando ele é exatamente <code class="inline-code">github</code> o <code class="inline-code">external_id</code> é casado sem diferenciar maiúsculas (e guardado em minúsculas), para qualquer <code class="inline-code">kind</code>. <code class="inline-code">GitHub</code> ou qualquer outra grafia é outra fonte.</li>
@@ -142,9 +153,13 @@ bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
 
 <h2 id="endpoint-security">Segurança do endpoint</h2>
 <ul>
-  <li>O endpoint divide o servidor com o dashboard, que escuta só em <code class="inline-code">127.0.0.1</code> e recusa requisições cujo <code class="inline-code">Host</code> não é o endereço local.</li>
-  <li>O token Bearer é obrigatório em toda requisição. Sem ele, ou com um token errado, o Drizza responde <code class="inline-code">401</code>.</li>
-  <li>O header <code class="inline-code">Origin</code> é opcional, porque clientes MCP de linha de comando não o enviam. Quando presente e diferente do endereço local do Drizza, a resposta é <code class="inline-code">403</code>, então uma página web aberta no seu browser não consegue chamar o endpoint.</li>
+  <li>O endpoint divide o servidor com o dashboard, que escuta só em <code class="inline-code">127.0.0.1</code>. O Drizza confere cada requisição a <code class="inline-code">/mcp</code> nesta ordem:
+<ol>
+  <li><strong>Host.</strong> Um <code class="inline-code">Host</code> que não é o endereço local do Drizza recebe <code class="inline-code">403</code>.</li>
+  <li><strong>Origin.</strong> O header <code class="inline-code">Origin</code> é opcional, porque clientes MCP de linha de comando não o enviam. Quando presente e diferente do endereço local do Drizza, a resposta é <code class="inline-code">403</code>, então uma página web aberta no seu browser não consegue chamar o endpoint.</li>
+  <li><strong>Método.</strong> Qualquer método que não seja <code class="inline-code">POST</code> recebe <code class="inline-code">405</code>.</li>
+  <li><strong>Token.</strong> Todo <code class="inline-code">POST</code> que passou pelas conferências acima precisa do token Bearer. Sem ele, ou com um token errado, o Drizza responde <code class="inline-code">401</code>.</li>
+</ol></li>
   <li>O token nunca é gravado no banco, em logs, em respostas da API nem no dashboard.</li>
 </ul>
 
