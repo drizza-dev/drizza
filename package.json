@@ -1,7 +1,24 @@
 {
   "name": "drizza",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Local dashboard for your daily agentic work context: pull requests and a daily briefing your own agent pushes over MCP.",
+  "keywords": [
+    "dashboard",
+    "briefing",
+    "mcp",
+    "github",
+    "claude-code",
+    "codex",
+    "local-first"
+  ],
+  "homepage": "https://docs.drizza.dev",
+  "bugs": {
+    "url": "https://github.com/drizza-dev/drizza/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drizza-dev/drizza.git"
+  },
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -11,15 +28,19 @@
   "bin": {
     "drizza": "./dist-node/cli/index.js"
   },
+  "files": [
+    "dist",
+    "dist-node"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && tsc -p tsconfig.server.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepack": "pnpm run build"
   },
   "devDependencies": {
     "@types/node": "~22.13.0",
     "typescript": "~7.0.2",
     "vite": "^8.3.6"
-  },
-  "description": "Dashboard local para contexto diário de trabalho agêntico"
+  }
 }
