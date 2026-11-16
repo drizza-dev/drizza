@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Configure o repositório do Drizza localmente e prepare uma contribuição.">
+  <meta name="theme-color" content="#f4f3ed">
+  <title>Contribuir · Drizza Docs</title>
+  <link rel="canonical" href="https://docs.drizza.dev/pt/guide/contributing/">
+  <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/contributing/">
+  <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/contributing/">
+  <link rel="alternate" hreflang="x-default" href="https://docs.drizza.dev/guide/contributing/">
+  <link rel="icon" href="/drizza-mark.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<header class="site-header wrap">
+  <a class="brand" href="/pt/" aria-label="Drizza home">
+    <img src="/drizza-mark.svg" width="34" height="34" alt="">
+    <span>drizza</span>
+  </a>
+  <nav class="primary-nav" aria-label="Navegação principal">
+    <a href="/pt/">Visão geral</a>
+    <a href="/pt/#guides">Guias</a>
+    <a href="/pt/guide/contributing/">Contribuir</a>
+  </nav>
+  <div class="header-actions">
+    <a class="github-link" href="https://github.com/grippado/drizza">GitHub</a>
+    <a class="language-link" href="/guide/contributing/" lang="en" hreflang="en">EN</a>
+  </div>
+</header>
+<main id="main" class="page-main wrap">
+  <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="/pt/">Início</a><span aria-hidden="true">/</span><span>Guias</span><span aria-hidden="true">/</span><span aria-current="page">Contribuir</span></nav>
+  <div class="guide-layout">
+    <nav class="guide-nav" aria-label="Guias">
+  <p class="eyebrow">Guias</p>
+  <a href="/pt/guide/run-locally/">Rodar localmente</a> <a href="/pt/guide/accounts/">Contas</a> <a href="/pt/guide/mcp/">MCP</a> <a href="/pt/guide/contributing/" aria-current="page">Contribuir</a>
+</nav>
+    <article class="prose">
+      <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Contribuir</h1><p>Rode o repositório atual do Drizza antes de fazer uma alteração.</p></header>
+      <h2 id="requirements">Requisitos</h2>
+<p>Instale uma versão compatível do Node.js: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>. O repositório usa npm e inclui um arquivo de lock.</p>
+
+<h2 id="setup">Configure o repositório</h2>
+<ol>
+  <li>Clone <a href="https://github.com/grippado/drizza">o repositório do Drizza</a>.</li>
+  <li>No diretório do repositório, instale as dependências:</li>
+</ol>
+<pre class="command-block"><code>npm install</code></pre>
+<p>Inicie o servidor de desenvolvimento do Vite:</p>
+<pre class="command-block"><code>npm run dev</code></pre>
+
+<h2 id="before-sharing">Antes de abrir uma pull request</h2>
+<p>Compile o projeto para encontrar problemas de compilação:</p>
+<pre class="command-block"><code>npm run build</code></pre>
+<p>Mantenha a alteração focada, descreva o impacto para quem usa o produto e inclua os passos usados para verificá-la. Abra uma <a href="https://github.com/grippado/drizza/issues">issue no GitHub</a> primeiro se a proposta mudar o escopo do produto ou o comportamento de um provedor.</p>
+
+<h2 id="current-status">Status das integrações</h2>
+<p>Os detalhes de configuração de GitHub, MCP e Slack serão publicados em breve. Não adicione comandos de provedores nem credenciais a uma contribuição antes da publicação desses guias.</p>
+      <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/mcp/">← MCP</a><a href="/pt/">Início →</a></nav>
+    </article>
+  </div>
+</main>
+<footer class="site-footer wrap">
+  <a class="footer-brand" href="/pt/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
+  <span>Código aberto · licença MIT</span>
+  <a href="https://github.com/grippado/drizza">Ver código-fonte</a>
+</footer>
+</body>
+</html>
