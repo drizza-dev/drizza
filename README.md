@@ -15,7 +15,7 @@ O uso de Vite e TypeScript aqui serve para iniciar a interface. Não decide o ru
 
 ## Briefing pelo seu agente
 
-O skill [`skills/drizza-briefing/SKILL.md`](skills/drizza-briefing/SKILL.md) ensina o Claude Code e o Codex a ler o dia (GitHub via `gh` e o que mais o agente já tiver conectado), montar o briefing e enviá-lo pelas tools `get_today` e `push_briefing` do MCP local. Antes, registre o MCP com os comandos que o `drizza` imprime ao subir.
+O skill [`skills/drizza-briefing/SKILL.md`](skills/drizza-briefing/SKILL.md) ensina o Claude Code e o Codex a ler o dia (GitHub via `gh` e o que mais o agente já tiver conectado), montar o briefing e enviá-lo pelas tools `get_today` e `push_briefing` do MCP local. Antes, registre o MCP com os comandos que o `drizza` imprime ao subir. No Codex em modo não interativo (`codex exec`), a chamada às tools do MCP precisa estar aprovada na configuração do servidor `drizza`, senão o Codex bloqueia o envio.
 
 Para instalar, copie o arquivo para a pasta de skills de cada agente, a partir da raiz do repositório:
 
