@@ -42,19 +42,23 @@
     <article class="prose">
       <header class="guide-intro"><p class="eyebrow">Open-source guide</p><h1>Run Drizza locally</h1><p>Start the local Drizza app and understand how it uses your machine.</p></header>
       <h2 id="requirements">Requirements</h2>
-<p>Use Node.js that matches <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>. The project uses Node's built-in SQLite support, so use a release in the supported range.</p>
+<p>Use Node.js 22.13+ or 23.4+ (the range <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>). Drizza uses Node's built-in SQLite support, so use a release in the supported range. <code class="inline-code">npx</code> comes with Node.js.</p>
 
 <h2 id="start">Start Drizza</h2>
-<p>Drizza is not published to npm yet. Run it from a clone of <a href="https://github.com/drizza-dev/drizza">the repository</a>, with pnpm installed. From the repository directory, install dependencies:</p>
-<pre class="command-block"><code>pnpm install</code></pre>
-<p>Build the dashboard and the local server:</p>
-<pre class="command-block"><code>pnpm build</code></pre>
-<p>Start Drizza:</p>
-<pre class="command-block"><code>node dist-node/cli/index.js</code></pre>
-<p>Drizza binds to <code class="inline-code">127.0.0.1</code> and listens on port <code class="inline-code">4340</code> by default. Open <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> in your browser.</p>
+<p>Drizza is published on npm as <a href="https://www.npmjs.com/package/drizza"><code class="inline-code">drizza</code></a>. Start it with <code class="inline-code">npx</code>, without cloning or building anything:</p>
+<pre class="command-block"><code>npx drizza</code></pre>
+<p>Drizza binds to <code class="inline-code">127.0.0.1</code> and listens on port <code class="inline-code">4340</code> by default. Open <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> in your browser. On start it also prints the local MCP endpoint and the commands to register it in Claude Code and Codex; the MCP token stays in its file and is never printed.</p>
+
+<h3 id="options">Options</h3>
+<ul>
+  <li><code class="inline-code">--port &lt;port&gt;</code> listens on another port, from 1 to 65535.</li>
+  <li><code class="inline-code">--db &lt;path&gt;</code> keeps the SQLite database at another path. A leading <code class="inline-code">~</code> expands to your home directory.</li>
+</ul>
+<pre class="command-block"><code>npx drizza --port 4341 --db ~/drizza-data/drizza.db</code></pre>
+<div class="info-box"><p><strong>Building from source.</strong> To run Drizza from a clone of the repository, for example to test a change, see <a href="/guide/contributing/#local-build">Contributing</a>.</p></div>
 
 <h2 id="data">Local data</h2>
-<p>The SQLite database lives at <code class="inline-code">~/.drizza/drizza.db</code>. Drizza creates it on the first run and keeps it on your machine.</p>
+<p>Drizza keeps its data in <code class="inline-code">~/.drizza</code>. The SQLite database lives at <code class="inline-code">~/.drizza/drizza.db</code>; Drizza creates it on the first run and keeps it on your machine. With <code class="inline-code">--db</code>, the database and the MCP token file live in the directory of that path instead.</p>
 <div class="info-box"><p><strong>Back up your data.</strong> To preserve local Drizza data, include the database file in your own backup plan. Keep a copy only in a location you trust.</p></div>
 
 <h2 id="security">Security and tokens</h2>

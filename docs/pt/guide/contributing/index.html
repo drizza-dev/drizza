@@ -52,6 +52,13 @@
 <pre class="command-block"><code>pnpm install</code></pre>
 <p>Inicie o servidor de desenvolvimento do Vite:</p>
 <pre class="command-block"><code>pnpm dev</code></pre>
+<p>O servidor de desenvolvimento do Vite serve só a interface, sem a API local.</p>
+
+<h2 id="local-build">Rode o seu build local</h2>
+<p>Para usar as suas alterações com a API local, gere o build do dashboard e do servidor local:</p>
+<pre class="command-block"><code>pnpm build</code></pre>
+<p>Depois inicie o CLI compilado. Uma porta e um banco separados deixam intactos os dados do seu <code class="inline-code">npx drizza</code> do dia a dia, em <code class="inline-code">~/.drizza</code>:</p>
+<pre class="command-block"><code>node dist-node/cli/index.js --port 4399 --db ~/.drizza-dev/drizza.db</code></pre>
 
 <h2 id="before-sharing">Antes de abrir uma pull request</h2>
 <p>Compile o projeto para encontrar problemas de compilação:</p>
@@ -59,7 +66,7 @@
 <p>Mantenha a alteração focada, descreva o impacto para quem usa o produto e inclua os passos usados para verificá-la. Abra uma <a href="https://github.com/drizza-dev/drizza/issues">issue no GitHub</a> primeiro se a proposta mudar o escopo do produto ou o comportamento de um provedor.</p>
 
 <h2 id="current-status">Status das integrações</h2>
-<p>A integração com o GitHub está documentada em <a href="/pt/guide/github/">Conectar o GitHub</a>. O servidor de desenvolvimento do Vite não roda a API local, então teste o sync do GitHub com o servidor compilado descrito em <a href="/pt/guide/run-locally/">Rodar localmente</a>. A integração com o Slack será publicada em breve. Nunca adicione credenciais a uma contribuição.</p>
+<p>A integração com o GitHub está documentada em <a href="/pt/guide/github/">Conectar o GitHub</a>. O servidor de desenvolvimento do Vite não roda a API local, então teste o sync do GitHub com o seu <a href="#local-build">build local</a>. A integração com o Slack será publicada em breve. Nunca adicione credenciais a uma contribuição.</p>
       <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/mcp/">← MCP</a><a href="/pt/">Início →</a></nav>
     </article>
   </div>

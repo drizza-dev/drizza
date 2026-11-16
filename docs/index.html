@@ -48,10 +48,10 @@
 
   <section class="section tinted" id="quickstart">
     <div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">Quickstart</p><h2>Start from the repository.</h2></div><p>Use a supported Node.js version, build Drizza from source, start it on your machine, then open its local address in a browser.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Quickstart</p><h2>Start with npx.</h2></div><p>Use a supported Node.js version, start Drizza from npm on your machine, then open its local address in a browser.</p></div>
       <div class="quickstart-card">
-        <article class="quickstart-step"><span class="step-number">01</span><h3>Check Node.js</h3><p>Required version: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>.</p></article>
-        <article class="quickstart-step"><span class="step-number">02</span><h3>Start Drizza</h3><p>Drizza is not on npm yet. In a clone of the repository, run <code class="inline-code">pnpm install</code> and <code class="inline-code">pnpm build</code>, then:</p><pre class="command-block"><code>node dist-node/cli/index.js</code></pre></article>
+        <article class="quickstart-step"><span class="step-number">01</span><h3>Check Node.js</h3><p>Required version: 22.13+ or 23.4+ (<code class="inline-code">^22.13.0 || &gt;=23.4.0</code>).</p></article>
+        <article class="quickstart-step"><span class="step-number">02</span><h3>Start Drizza</h3><p>Run it from npm, with no clone or build. Data stays in <code class="inline-code">~/.drizza</code>; <code class="inline-code">--port</code> and <code class="inline-code">--db</code> change the defaults.</p><pre class="command-block"><code>npx drizza</code></pre></article>
         <article class="quickstart-step"><span class="step-number">03</span><h3>Open the local app</h3><p>Default address: <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a>.</p></article>
       </div>
     </div>

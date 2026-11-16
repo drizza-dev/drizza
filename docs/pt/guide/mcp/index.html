@@ -51,7 +51,7 @@
 
 <h2 id="start">Iniciar o Drizza e carregar o token</h2>
 <p>Inicie o Drizza como descrito em <a href="/pt/guide/run-locally/">Rodar localmente</a>:</p>
-<pre class="command-block"><code>node dist-node/cli/index.js</code></pre>
+<pre class="command-block"><code>npx drizza</code></pre>
 <p>Na primeira vez, o Drizza cria um token aleatório e o guarda em <code class="inline-code">~/.drizza/mcp-token</code>, legível só pelo seu usuário. O arquivo do token fica sempre ao lado do banco: com <code class="inline-code">--db &lt;caminho&gt;</code>, ele fica no mesmo diretório desse banco. O Drizza nunca exibe o token.</p>
 <p>Depois de subir, o Drizza imprime o endpoint, onde está o token e os comandos de registro dos dois agentes, já com o caminho absoluto do seu arquivo de token e a porta em uso. Com os valores padrão, eles batem com os comandos desta página.</p>
 <p>No shell que vai abrir o Claude Code ou o Codex, carregue o token numa variável:</p>
@@ -83,10 +83,10 @@ bearer_token_env_var = "DRIZZA_MCP_TOKEN"</code></pre>
 <p>Isso aprova todas as tools do Drizza sem perguntar, também nas sessões interativas. Deixe de fora se preferir aprovar cada chamada.</p>
 
 <h2 id="skill">Rodar o skill de briefing</h2>
-<p>O repositório traz um skill, <code class="inline-code">skills/drizza-briefing/SKILL.md</code>, que ensina os dois agentes a montar o briefing. Ele lê o que o Drizza já tem com <code class="inline-code">get_today</code>, coleta o dia nas fontes que o agente já alcança (GitHub pelo <code class="inline-code">gh</code>, e Slack, Linear ou outras só se o agente já tiver uma ferramenta para elas) e envia o resultado com <code class="inline-code">push_briefing</code>. O agente nunca lê o arquivo do token nem o banco.</p>
-<p>A partir da raiz do seu clone, copie o skill para a pasta de skills de cada agente:</p>
-<pre class="command-block"><code>mkdir -p ~/.claude/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.claude/skills/drizza-briefing/</code></pre>
-<pre class="command-block"><code>mkdir -p ~/.codex/skills/drizza-briefing &amp;&amp; cp skills/drizza-briefing/SKILL.md ~/.codex/skills/drizza-briefing/</code></pre>
+<p>O Drizza traz um skill, <code class="inline-code">skills/drizza-briefing/SKILL.md</code> no pacote e no <a href="https://github.com/drizza-dev/drizza/blob/main/skills/drizza-briefing/SKILL.md">repositório</a>, que ensina os dois agentes a montar o briefing. Ele lê o que o Drizza já tem com <code class="inline-code">get_today</code>, coleta o dia nas fontes que o agente já alcança (GitHub pelo <code class="inline-code">gh</code>, e Slack, Linear ou outras só se o agente já tiver uma ferramenta para elas) e envia o resultado com <code class="inline-code">push_briefing</code>. O agente nunca lê o arquivo do token nem o banco.</p>
+<p>Baixe o skill para a pasta de skills de cada agente:</p>
+<pre class="command-block"><code>mkdir -p ~/.claude/skills/drizza-briefing &amp;&amp; curl -fsSL https://raw.githubusercontent.com/drizza-dev/drizza/main/skills/drizza-briefing/SKILL.md -o ~/.claude/skills/drizza-briefing/SKILL.md</code></pre>
+<pre class="command-block"><code>mkdir -p ~/.codex/skills/drizza-briefing &amp;&amp; curl -fsSL https://raw.githubusercontent.com/drizza-dev/drizza/main/skills/drizza-briefing/SKILL.md -o ~/.codex/skills/drizza-briefing/SKILL.md</code></pre>
 <p>Depois rode no Claude Code:</p>
 <pre class="command-block"><code>/drizza-briefing</code></pre>
 <p>Ou no Codex:</p>

@@ -52,6 +52,13 @@
 <pre class="command-block"><code>pnpm install</code></pre>
 <p>Start the Vite development server:</p>
 <pre class="command-block"><code>pnpm dev</code></pre>
+<p>The Vite development server serves only the UI, without the local API.</p>
+
+<h2 id="local-build">Run your local build</h2>
+<p>To use your changes with the local API, build the dashboard and the local server:</p>
+<pre class="command-block"><code>pnpm build</code></pre>
+<p>Then start the compiled CLI. A separate port and database keep the data of your everyday <code class="inline-code">npx drizza</code> in <code class="inline-code">~/.drizza</code> untouched:</p>
+<pre class="command-block"><code>node dist-node/cli/index.js --port 4399 --db ~/.drizza-dev/drizza.db</code></pre>
 
 <h2 id="before-sharing">Before opening a pull request</h2>
 <p>Build the project to catch compile-time issues:</p>
@@ -59,7 +66,7 @@
 <p>Keep the change focused, describe its user impact, and include the steps you used to verify it. Open a <a href="https://github.com/drizza-dev/drizza/issues">GitHub issue</a> first if the proposed change affects product scope or provider behavior.</p>
 
 <h2 id="current-status">Current integration status</h2>
-<p>The GitHub integration is documented in <a href="/guide/github/">Connect GitHub</a>. The Vite development server does not run the local API, so test the GitHub sync with the built server described in <a href="/guide/run-locally/">Run locally</a>. The Slack integration is coming soon. Never add credentials to a contribution.</p>
+<p>The GitHub integration is documented in <a href="/guide/github/">Connect GitHub</a>. The Vite development server does not run the local API, so test the GitHub sync with your <a href="#local-build">local build</a>. The Slack integration is coming soon. Never add credentials to a contribution.</p>
       <nav class="page-actions" aria-label="Adjacent guides"><a href="/guide/mcp/">← MCP</a><a href="/">Home →</a></nav>
     </article>
   </div>
