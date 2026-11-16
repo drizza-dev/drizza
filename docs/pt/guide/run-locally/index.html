@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Instale o Drizza, inicie o servidor local e veja onde os dados são armazenados.">
+  <meta name="theme-color" content="#f4f3ed">
+  <title>Rodar o Drizza localmente · Drizza Docs</title>
+  <link rel="canonical" href="https://docs.drizza.dev/pt/guide/run-locally/">
+  <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/run-locally/">
+  <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/run-locally/">
+  <link rel="alternate" hreflang="x-default" href="https://docs.drizza.dev/guide/run-locally/">
+  <link rel="icon" href="/drizza-mark.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
+<header class="site-header wrap">
+  <a class="brand" href="/pt/" aria-label="Início do Drizza">
+    <img src="/drizza-mark.svg" width="34" height="34" alt="">
+    <span>drizza</span>
+  </a>
+  <nav class="primary-nav" aria-label="Navegação principal">
+    <a href="/pt/">Visão geral</a>
+    <a href="/pt/#guides">Guias</a>
+    <a href="/pt/guide/contributing/">Contribuir</a>
+  </nav>
+  <div class="header-actions">
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
+    <a class="language-link" href="/guide/run-locally/" lang="en" hreflang="en">EN</a>
+  </div>
+</header>
+<main id="main" class="page-main wrap">
+  <nav class="breadcrumbs" aria-label="Trilha de navegação"><a href="/pt/">Início</a><span aria-hidden="true">/</span><span>Guias</span><span aria-hidden="true">/</span><span aria-current="page">Rodar o Drizza localmente</span></nav>
+  <div class="guide-layout">
+    <nav class="guide-nav" aria-label="Guias">
+  <p class="eyebrow">Guias</p>
+  <a href="/pt/guide/run-locally/" aria-current="page">Rodar localmente</a> <a href="/pt/guide/accounts/">Contas</a> <a href="/pt/guide/mcp/">MCP</a> <a href="/pt/guide/contributing/">Contribuir</a>
+</nav>
+    <article class="prose">
+      <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Rodar o Drizza localmente</h1><p>Inicie o app local do Drizza e entenda como ele usa sua máquina.</p></header>
+      <h2 id="requirements">Requisitos</h2>
+<p>Use uma versão do Node.js compatível com <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>. O projeto usa o suporte nativo a SQLite do Node, então escolha uma versão dentro dessa faixa.</p>
+
+<h2 id="start">Inicie o Drizza</h2>
+<p>Execute o pacote no terminal:</p>
+<pre class="command-block"><code>npx drizza</code></pre>
+<p>O Drizza faz bind em <code class="inline-code">127.0.0.1</code> e usa a porta <code class="inline-code">4340</code> por padrão. Abra <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a> no navegador.</p>
+
+<h2 id="data">Dados locais</h2>
+<p>O banco SQLite fica em <code class="inline-code">~/.drizza/drizza.db</code>. O Drizza o cria na primeira execução e mantém os dados na sua máquina.</p>
+<div class="info-box"><p><strong>Faça backup dos seus dados.</strong> Para preservar os dados locais do Drizza, inclua o arquivo do banco no seu plano de backup. Guarde uma cópia apenas em um local confiável.</p></div>
+
+<h2 id="security">Segurança e tokens</h2>
+<ul>
+  <li>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, então outros dispositivos da sua rede não conseguem acessá-lo.</li>
+  <li>O comportamento planejado para as integrações com provedores é que o processo local use as credenciais e envie as requisições diretamente a cada provedor. Os tokens não devem passar por serviços hospedados pelo Drizza nem ser gravados no banco SQLite, nos logs, nas respostas da API ou na interface.</li>
+  <li>As integrações com provedores e as instruções de gerenciamento de tokens ainda estão sendo preparadas. Os passos exatos para revogar o token MCP serão publicados no guia de MCP quando o local do token for definido.</li>
+</ul>
+
+<h2 id="integrations">Integrações</h2>
+<p>Os guias de configuração do GitHub, MCP e Slack serão publicados em breve. Este guia ainda não inclui comandos para essas integrações.</p>
+      <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/">← Início</a><a href="/pt/guide/accounts/">Contas →</a></nav>
+    </article>
+  </div>
+</main>
+<footer class="site-footer wrap">
+  <a class="footer-brand" href="/pt/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
+  <span>Código aberto · licença MIT</span>
+  <a href="https://github.com/drizza-dev/drizza">Ver código-fonte</a>
+</footer>
+</body>
+</html>

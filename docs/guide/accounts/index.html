@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Learn whether Drizza needs an account and where your local data lives.">
+  <meta name="theme-color" content="#f4f3ed">
+  <title>Accounts and local data · Drizza Docs</title>
+  <link rel="canonical" href="https://docs.drizza.dev/guide/accounts/">
+  <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/guide/accounts/">
+  <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/guide/accounts/">
+  <link rel="alternate" hreflang="x-default" href="https://docs.drizza.dev/guide/accounts/">
+  <link rel="icon" href="/drizza-mark.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header wrap">
+  <a class="brand" href="/" aria-label="Drizza home">
+    <img src="/drizza-mark.svg" width="34" height="34" alt="">
+    <span>drizza</span>
+  </a>
+  <nav class="primary-nav" aria-label="Main navigation">
+    <a href="/">Overview</a>
+    <a href="/#guides">Guides</a>
+    <a href="/guide/contributing/">Contributing</a>
+  </nav>
+  <div class="header-actions">
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
+    <a class="language-link" href="/pt/guide/accounts/" lang="pt-BR" hreflang="pt-BR">PT-BR</a>
+  </div>
+</header>
+<main id="main" class="page-main wrap">
+  <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Guides</span><span aria-hidden="true">/</span><span aria-current="page">Accounts and local data</span></nav>
+  <div class="guide-layout">
+    <nav class="guide-nav" aria-label="Guides">
+  <p class="eyebrow">Guides</p>
+  <a href="/guide/run-locally/">Run locally</a> <a href="/guide/accounts/" aria-current="page">Accounts</a> <a href="/guide/mcp/">MCP</a> <a href="/guide/contributing/">Contributing</a>
+</nav>
+    <article class="prose">
+      <header class="guide-intro"><p class="eyebrow">Open-source guide</p><h1>Accounts and local data</h1><p>The open-source local app does not require a Drizza account.</p></header>
+      <h2 id="local-use">Using Drizza locally</h2>
+<p>You do not need a Drizza account to run the open-source local app. Drizza runs on your machine, and its local SQLite database is stored at <code class="inline-code">~/.drizza/drizza.db</code>.</p>
+
+<h2 id="provider-accounts">Provider accounts</h2>
+<p>GitHub, MCP, and Slack integrations are not available in this guide yet. Their connection steps, permissions, and token-revocation instructions will be documented when the corresponding integrations are ready.</p>
+<div class="warning-box"><p><strong>Do not paste credentials into this guide or into an issue.</strong> Wait for the provider-specific instructions before connecting an account.</p></div>
+
+<h2 id="privacy">Local privacy</h2>
+<p>The local server binds to <code class="inline-code">127.0.0.1</code>. The planned behavior for provider integrations is for the local process to use credentials directly with providers, without writing them to the Drizza SQLite database or logs. Tokens are planned to stay out of Drizza-hosted services.</p>
+      <nav class="page-actions" aria-label="Adjacent guides"><a href="/guide/run-locally/">← Run locally</a><a href="/guide/mcp/">MCP →</a></nav>
+    </article>
+  </div>
+</main>
+<footer class="site-footer wrap">
+  <a class="footer-brand" href="/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
+  <span>Open source · MIT license</span>
+  <a href="https://github.com/drizza-dev/drizza">View source</a>
+</footer>
+</body>
+</html>

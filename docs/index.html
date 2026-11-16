@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Install Drizza locally, understand local data, and find the current setup guides.">
+  <meta name="theme-color" content="#f4f3ed">
+  <title>Open-source setup guides · Drizza Docs</title>
+  <link rel="canonical" href="https://docs.drizza.dev/">
+  <link rel="alternate" hreflang="en" href="https://docs.drizza.dev/">
+  <link rel="alternate" hreflang="pt-BR" href="https://docs.drizza.dev/pt/">
+  <link rel="alternate" hreflang="x-default" href="https://docs.drizza.dev/">
+  <link rel="icon" href="/drizza-mark.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header wrap">
+  <a class="brand" href="/" aria-label="Drizza home">
+    <img src="/drizza-mark.svg" width="34" height="34" alt="">
+    <span>drizza</span>
+  </a>
+  <nav class="primary-nav" aria-label="Main navigation">
+    <a href="/">Overview</a>
+    <a href="/#guides">Guides</a>
+    <a href="/guide/contributing/">Contributing</a>
+  </nav>
+  <div class="header-actions">
+    <a class="github-link" href="https://github.com/drizza-dev/drizza">GitHub</a>
+    <a class="language-link" href="/pt/" lang="pt-BR" hreflang="pt-BR">PT-BR</a>
+  </div>
+</header>
+<main id="main">
+  <section class="hero wrap">
+    <div>
+      <p class="eyebrow">Drizza · open-source guide</p>
+      <h1>Run Drizza <em>locally.</em></h1>
+      <p class="lede">Drizza is a local dashboard for gathering work context: conversations, pull requests, and a daily briefing with links to their sources.</p>
+      <div class="actions"><a class="button primary" href="/guide/run-locally/">Start the quickstart <span aria-hidden="true">→</span></a><a class="button quiet" href="https://github.com/drizza-dev/drizza">View the source</a></div>
+    </div>
+    <aside class="hero-panel" aria-label="Local server overview">
+      <span class="local-badge"><span></span> Runs on your machine</span>
+      <div><p class="local-status">Local server</p><p class="local-address"><code>127.0.0.1:4340</code></p><ul class="hero-list"><li>Conversations</li><li>Pull requests</li><li>Daily briefing</li></ul></div>
+    </aside>
+  </section>
+
+  <section class="section tinted" id="quickstart">
+    <div class="wrap">
+      <div class="section-heading"><div><p class="eyebrow">Quickstart</p><h2>Start with one command.</h2></div><p>Use a supported Node.js version, start Drizza on your machine, then open its local address in a browser.</p></div>
+      <div class="quickstart-card">
+        <article class="quickstart-step"><span class="step-number">01</span><h3>Check Node.js</h3><p>Required version: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>.</p></article>
+        <article class="quickstart-step"><span class="step-number">02</span><h3>Start Drizza</h3><p>Run the package from your terminal.</p><pre class="command-block"><code>npx drizza</code></pre></article>
+        <article class="quickstart-step"><span class="step-number">03</span><h3>Open the local app</h3><p>Default address: <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a>.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="guides">
+    <div class="section-heading"><div><p class="eyebrow">Guides</p><h2>Find your next step.</h2></div><p>Short, practical notes for running Drizza locally and contributing to the open-source project.</p></div>
+    <div class="card-grid"><a class="card" href="/guide/run-locally/"><span class="card-label">01 · Setup</span><h3>Run locally</h3><p>Install Drizza, start the local server, and find the local database.</p><span class="card-arrow">Read the guide →</span></a>
+<a class="card" href="/guide/accounts/"><span class="card-label">02 · Privacy</span><h3>Accounts and data</h3><p>Learn what stays on your machine and whether an account is required.</p><span class="card-arrow">Read the guide →</span></a>
+<a class="card" href="/guide/mcp/"><span class="card-label">03 · Agents</span><h3>MCP</h3><p>See the current status of the local MCP integration.</p><span class="card-arrow">Read the guide →</span></a>
+<a class="card" href="/guide/contributing/"><span class="card-label">04 · Community</span><h3>Contributing</h3><p>Set up the repository and prepare a focused contribution.</p><span class="card-arrow">Read the guide →</span></a></div>
+  </section>
+
+  <section class="section tinted" id="security">
+    <div class="wrap">
+      <div class="section-heading"><div><p class="eyebrow">Security</p><h2>Your data stays local.</h2></div><p>Drizza runs on loopback. The planned behavior for provider integrations is for the local process to send requests directly to each provider; token values are planned to stay out of Drizza-hosted services.</p></div>
+      <div class="security-strip">
+        <article class="security-item"><h3>Loopback only</h3><p>The local server binds to <code class="inline-code">127.0.0.1</code>, not your network interface.</p></article>
+        <article class="security-item"><h3>Local database</h3><p>SQLite data is stored at <code class="inline-code">~/.drizza/drizza.db</code>.</p></article>
+        <article class="security-item"><h3>Token guidance in progress</h3><p>Provider setup is coming soon. The planned behavior is to keep token values out of SQLite, logs, API responses, and the UI. The MCP token-file location and revocation steps will be documented once finalized.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="integrations">
+    <div class="section-heading"><div><p class="eyebrow">Integrations</p><h2>Provider guides are coming soon.</h2></div><p>Setup commands and permissions will appear when each integration is ready. No provider commands are listed here yet.</p></div>
+    <div class="card-grid"><article class="card coming-soon"><span class="card-label">Coming soon</span><h3>GitHub</h3><p>Connection steps, permissions, and token management will be published with the GitHub integration.</p></article>
+<article class="card coming-soon"><span class="card-label">Coming soon</span><h3>MCP</h3><p>Agent setup and local token revocation steps will be published when the MCP integration is ready.</p></article>
+<article class="card coming-soon"><span class="card-label">Coming soon</span><h3>Slack</h3><p>Slack connection instructions will be published with the Slack integration.</p></article></div>
+  </section>
+</main>
+<footer class="site-footer wrap">
+  <a class="footer-brand" href="/"><img src="/drizza-mark.svg" width="23" height="23" alt=""><span>drizza</span></a>
+  <span>Open source · MIT license</span>
+  <a href="https://github.com/drizza-dev/drizza">View source</a>
+</footer>
+</body>
+</html>
