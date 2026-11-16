@@ -158,7 +158,7 @@ app.innerHTML = [
   '      </div>',
   '      <div class="welcome-actions">',
   '        <button class="button button-primary" id="brief-button" type="button">',
-  '          <span>Me atualize para hoje</span><span class="button-arrow" aria-hidden="true">↗</span>',
+  '          <span>Copiar comando do briefing</span><span class="button-arrow" aria-hidden="true">↗</span>',
   '        </button>',
   '        <button class="button button-secondary" id="sync-button" type="button">',
   '          <span class="sync-symbol" aria-hidden="true">↻</span><span>Sync Now</span>',
@@ -172,16 +172,16 @@ app.innerHTML = [
   '    <section class="briefing-section" id="briefing" aria-labelledby="briefing-title">',
   '      <div class="section-heading">',
   '        <div><p class="eyebrow">SEU PONTO DE PARTIDA</p><h2 id="briefing-title">Briefing de hoje</h2></div>',
-  '        <span class="quiet-label" id="briefing-state">Aguardando fontes</span>',
+  '        <span class="quiet-label" id="briefing-state">Aguardando o agente</span>',
   '      </div>',
   '      <article class="briefing-card" id="briefing-card">',
   '        <div class="briefing-orbit" aria-hidden="true"><span></span><span></span><span></span></div>',
   '        <div class="briefing-copy">',
   '          <p class="briefing-kicker">O dia começa com clareza</p>',
   '          <h3>Sua atualização aparece aqui.</h3>',
-  '          <p>Conecte Slack e sincronize o GitHub para reunir o que merece sua atenção, com links para cada fonte.</p>',
+  '          <p>Quem escreve o briefing é o seu agente. Rode /drizza-briefing no Claude Code ou $drizza-briefing no Codex: ele lê as fontes a que tem acesso e envia o resumo para cá, com links para cada fonte.</p>',
   '        </div>',
-  '        <div class="briefing-meta"><span class="meta-mark"></span><span id="briefing-meta-text">Nenhum dado sincronizado</span></div>',
+  '        <div class="briefing-meta"><span class="meta-mark"></span><span id="briefing-meta-text">Nenhum briefing recebido</span></div>',
   '      </article>',
   '    </section>',
   '',
@@ -837,6 +837,22 @@ document.addEventListener('visibilitychange', () => {
 
 void loadBriefing()
 
-briefButton?.addEventListener('click', () => {
-  announce('O briefing ainda não pode ser gerado: Slack não está conectado.')
+const briefingCommand = '/drizza-briefing'
+const briefingManualHint = `Rode ${briefingCommand} no Claude Code ou $drizza-briefing no Codex. O briefing aparece aqui quando o agente enviar.`
+
+const copyText = async (text: string): Promise<boolean> => {
+  if (!window.isSecureContext || !navigator.clipboard) return false
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+briefButton?.addEventListener('click', async () => {
+  const copied = await copyText(briefingCommand)
+  announce(copied
+    ? `Comando ${briefingCommand} copiado. Cole no Claude Code (no Codex, use $drizza-briefing). O briefing aparece aqui quando o agente enviar.`
+    : `Não foi possível copiar automaticamente. ${briefingManualHint}`)
 })
