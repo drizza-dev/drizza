@@ -75,15 +75,18 @@ function shellQuote(value: string): string {
 
 function printMcpSetup(port: number, tokenPath: string): void {
   const mcpUrl = `http://127.0.0.1:${port}/mcp`;
-  const readToken = `$(cat ${shellQuote(tokenPath)})`;
 
   console.log(`MCP local: ${mcpUrl}`);
   console.log(`Token do MCP: guardado em ${tokenPath} (não é exibido aqui)`);
-  console.log("Para registrar no Claude Code:");
-  console.log(`  claude mcp add --transport http drizza ${mcpUrl} --header "Authorization: Bearer ${readToken}"`);
-  console.log("Para registrar no Codex (a variável precisa existir no shell que abre o Codex):");
-  console.log(`  export DRIZZA_MCP_TOKEN="${readToken}"`);
+  console.log("Para registrar, carregue o token numa variável no shell que vai abrir o Claude Code ou o Codex:");
+  console.log(`  export DRIZZA_MCP_TOKEN=$(cat ${shellQuote(tokenPath)})`);
+  console.log("Claude Code (a aspa simples guarda só a referência à variável, não o token):");
+  console.log(`  claude mcp add --transport http drizza ${mcpUrl} --header 'Authorization: Bearer \${DRIZZA_MCP_TOKEN}'`);
+  console.log("Codex:");
   console.log(`  codex mcp add drizza --url ${mcpUrl} --bearer-token-env-var DRIZZA_MCP_TOKEN`);
+  console.log(
+    'Evite --header "Authorization: Bearer $(cat ...)": o token aparece no argv (visível no ps) e pode ficar em texto puro na configuração do cliente.',
+  );
 }
 
 function closeResources(server: Server, closeDatabase: () => void): void {
