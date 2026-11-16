@@ -554,6 +554,61 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+.briefing-sections {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.briefing-sections[hidden] {
+  display: none;
+}
+
+.briefing-block-title {
+  margin: 0 0 6px;
+  color: var(--hero-accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.briefing-bullets {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--hero-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.briefing-bullet-text {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.briefing-links {
+  margin-left: 8px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.briefing-link {
+  color: var(--hero-text);
+  font-size: 13px;
+  font-weight: 620;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.briefing-link-unsafe {
+  color: var(--hero-meta);
+  text-decoration: none;
+}
+
 .briefing-meta {
   flex: 0 0 auto;
   align-self: flex-end;

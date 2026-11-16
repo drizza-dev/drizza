@@ -35,6 +35,33 @@ interface GithubPrsResponse {
   lastSync: GithubSyncRun | null
 }
 
+type BriefingLinkSource = 'slack' | 'github' | 'other'
+
+interface BriefingLink {
+  url: string
+  label: string
+  source: BriefingLinkSource
+}
+
+interface BriefingBullet {
+  text: string
+  links: BriefingLink[]
+}
+
+interface BriefingSection {
+  title: string
+  bullets: BriefingBullet[]
+}
+
+interface Briefing {
+  briefingId: string
+  date: string
+  agent: string
+  headline: string
+  sections: BriefingSection[]
+  receivedAt: string
+}
+
 interface GithubCardView {
   status: HTMLParagraphElement
   list: HTMLUListElement
@@ -145,16 +172,16 @@ app.innerHTML = [
   '    <section class="briefing-section" id="briefing" aria-labelledby="briefing-title">',
   '      <div class="section-heading">',
   '        <div><p class="eyebrow">SEU PONTO DE PARTIDA</p><h2 id="briefing-title">Briefing de hoje</h2></div>',
-  '        <span class="quiet-label">Aguardando fontes</span>',
+  '        <span class="quiet-label" id="briefing-state">Aguardando fontes</span>',
   '      </div>',
-  '      <article class="briefing-card">',
+  '      <article class="briefing-card" id="briefing-card">',
   '        <div class="briefing-orbit" aria-hidden="true"><span></span><span></span><span></span></div>',
   '        <div class="briefing-copy">',
   '          <p class="briefing-kicker">O dia começa com clareza</p>',
   '          <h3>Sua atualização aparece aqui.</h3>',
   '          <p>Conecte Slack e sincronize o GitHub para reunir o que merece sua atenção, com links para cada fonte.</p>',
   '        </div>',
-  '        <div class="briefing-meta"><span class="meta-mark"></span><span>Nenhum dado sincronizado</span></div>',
+  '        <div class="briefing-meta"><span class="meta-mark"></span><span id="briefing-meta-text">Nenhum dado sincronizado</span></div>',
   '      </article>',
   '    </section>',
   '',
@@ -356,7 +383,7 @@ const formatSyncTime = (value: string | null): string => {
   }).format(date)
 }
 
-const safePullRequestUrl = (value: string): string | null => {
+const safeExternalUrl = (value: string): string | null => {
   try {
     const url = new URL(value)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
@@ -372,7 +399,7 @@ const makePullRequestItem = (pullRequest: GithubPullRequest): HTMLLIElement => {
 
   const heading = document.createElement('div')
   heading.className = 'github-pr-heading'
-  const url = safePullRequestUrl(pullRequest.url)
+  const url = safeExternalUrl(pullRequest.url)
 
   if (url) {
     const link = document.createElement('a')
@@ -612,6 +639,203 @@ syncButton?.addEventListener('click', async () => {
 })
 
 refreshGithubPrs()
+
+const briefingState = document.querySelector<HTMLElement>('#briefing-state')
+const briefingCard = document.querySelector<HTMLElement>('#briefing-card')
+const briefingKicker = briefingCard?.querySelector<HTMLParagraphElement>('.briefing-kicker') ?? null
+const briefingHeadline = briefingCard?.querySelector<HTMLHeadingElement>('.briefing-copy h3') ?? null
+const briefingDescription = briefingCard?.querySelector<HTMLParagraphElement>('.briefing-copy > p:last-child') ?? null
+const briefingMetaText = document.querySelector<HTMLSpanElement>('#briefing-meta-text')
+const briefingEmptyCopy = {
+  state: briefingState?.textContent ?? '',
+  kicker: briefingKicker?.textContent ?? '',
+  headline: briefingHeadline?.textContent ?? '',
+  meta: briefingMetaText?.textContent ?? '',
+}
+const briefingSections = document.createElement('div')
+briefingSections.className = 'briefing-sections'
+briefingSections.hidden = true
+if (briefingDescription) briefingDescription.before(briefingSections)
+
+const briefingPollInterval = 5000
+const briefingRequestTimeout = 4000
+let renderedBriefingKey: string | null = null
+let briefingPollFailures = 0
+let briefingTimer: number | null = null
+let briefingLoading = false
+
+const parseBriefingLink = (value: unknown): BriefingLink | null => {
+  if (!isRecord(value) || typeof value.url !== 'string' || typeof value.label !== 'string') return null
+  const source: BriefingLinkSource = value.source === 'slack' || value.source === 'github' ? value.source : 'other'
+  return { url: value.url, label: value.label, source }
+}
+
+const parseBriefingBullet = (value: unknown): BriefingBullet | null => {
+  if (!isRecord(value) || typeof value.text !== 'string') return null
+  const links = Array.isArray(value.links) ? value.links.map(parseBriefingLink) : []
+  return { text: value.text, links: links.filter((link): link is BriefingLink => link !== null) }
+}
+
+const parseBriefingSection = (value: unknown): BriefingSection | null => {
+  if (!isRecord(value) || typeof value.title !== 'string' || !Array.isArray(value.bullets)) return null
+  const bullets = value.bullets.map(parseBriefingBullet)
+  return { title: value.title, bullets: bullets.filter((bullet): bullet is BriefingBullet => bullet !== null) }
+}
+
+const parseBriefingResponse = (value: unknown): Briefing | null => {
+  if (!isRecord(value)) throw new Error('Resposta inválida do servidor local.')
+  if (value.briefing === null) return null
+
+  const briefing = value.briefing
+  if (
+    !isRecord(briefing)
+    || typeof briefing.briefing_id !== 'string'
+    || typeof briefing.date !== 'string'
+    || typeof briefing.agent !== 'string'
+    || typeof briefing.headline !== 'string'
+    || typeof briefing.received_at !== 'string'
+    || !Array.isArray(briefing.sections)
+  ) {
+    throw new Error('Resposta inválida do servidor local.')
+  }
+
+  const sections = briefing.sections.map(parseBriefingSection)
+
+  return {
+    briefingId: briefing.briefing_id,
+    date: briefing.date,
+    agent: briefing.agent,
+    headline: briefing.headline,
+    sections: sections.filter((section): section is BriefingSection => section !== null),
+    receivedAt: briefing.received_at,
+  }
+}
+
+const makeBriefingLink = (link: BriefingLink): HTMLElement => {
+  const url = safeExternalUrl(link.url)
+
+  if (!url) {
+    const label = document.createElement('span')
+    label.className = 'briefing-link briefing-link-unsafe'
+    label.textContent = link.label
+    return label
+  }
+
+  const anchor = document.createElement('a')
+  anchor.className = 'briefing-link'
+  anchor.href = url
+  anchor.target = '_blank'
+  anchor.rel = 'noopener noreferrer'
+  anchor.textContent = link.label
+  anchor.dataset.source = link.source
+  return anchor
+}
+
+const makeBriefingBullet = (bullet: BriefingBullet): HTMLLIElement => {
+  const item = document.createElement('li')
+  item.className = 'briefing-bullet'
+
+  const text = document.createElement('span')
+  text.className = 'briefing-bullet-text'
+  text.textContent = bullet.text
+  item.append(text)
+
+  if (bullet.links.length > 0) {
+    const links = document.createElement('span')
+    links.className = 'briefing-links'
+    links.append(...bullet.links.map(makeBriefingLink))
+    item.append(links)
+  }
+
+  return item
+}
+
+const makeBriefingSection = (section: BriefingSection): HTMLElement => {
+  const block = document.createElement('section')
+  block.className = 'briefing-block'
+
+  const title = document.createElement('h4')
+  title.className = 'briefing-block-title'
+  title.textContent = section.title
+
+  const list = document.createElement('ul')
+  list.className = 'briefing-bullets'
+  list.append(...section.bullets.map(makeBriefingBullet))
+
+  block.append(title, list)
+  return block
+}
+
+const renderBriefing = (briefing: Briefing | null): void => {
+  const key = briefing ? `${briefing.briefingId}:${briefing.receivedAt}` : 'empty'
+  if (key === renderedBriefingKey) return
+  renderedBriefingKey = key
+
+  if (!briefing) {
+    if (briefingState) briefingState.textContent = briefingEmptyCopy.state
+    if (briefingKicker) briefingKicker.textContent = briefingEmptyCopy.kicker
+    if (briefingHeadline) {
+      briefingHeadline.textContent = briefingEmptyCopy.headline
+      briefingHeadline.hidden = false
+    }
+    if (briefingMetaText) briefingMetaText.textContent = briefingEmptyCopy.meta
+    briefingSections.replaceChildren()
+    briefingSections.hidden = true
+    if (briefingDescription) briefingDescription.hidden = false
+    return
+  }
+
+  if (briefingState) briefingState.textContent = 'Recebido do agente'
+  if (briefingKicker) briefingKicker.textContent = 'Seu briefing chegou'
+  if (briefingHeadline) {
+    briefingHeadline.textContent = briefing.headline
+    briefingHeadline.hidden = briefing.headline.trim() === ''
+  }
+  if (briefingMetaText) briefingMetaText.textContent = `${briefing.agent} · ${formatSyncTime(briefing.receivedAt)}`
+  briefingSections.replaceChildren(...briefing.sections.map(makeBriefingSection))
+  briefingSections.hidden = briefing.sections.length === 0
+  if (briefingDescription) briefingDescription.hidden = true
+}
+
+const scheduleBriefingPoll = (delay: number): void => {
+  if (briefingTimer !== null) window.clearTimeout(briefingTimer)
+  briefingTimer = window.setTimeout(() => {
+    briefingTimer = null
+    void loadBriefing()
+  }, delay)
+}
+
+const loadBriefing = async (): Promise<void> => {
+  if (document.hidden || briefingLoading) return
+  briefingLoading = true
+
+  try {
+    const response = await fetch('/api/briefing/today', {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(briefingRequestTimeout),
+    })
+    if (!response.ok) throw new Error('O servidor local não respondeu.')
+
+    renderBriefing(parseBriefingResponse(await response.json()))
+    briefingPollFailures = 0
+  } catch {
+    briefingPollFailures = Math.min(briefingPollFailures + 1, 4)
+    if (briefingState) briefingState.textContent = 'Servidor local indisponível'
+    renderedBriefingKey = null
+  } finally {
+    briefingLoading = false
+    scheduleBriefingPoll(briefingPollInterval * 2 ** briefingPollFailures)
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    briefingPollFailures = 0
+    void loadBriefing()
+  }
+})
+
+void loadBriefing()
 
 briefButton?.addEventListener('click', () => {
   announce('O briefing ainda não pode ser gerado: Slack não está conectado.')
