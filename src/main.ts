@@ -172,7 +172,7 @@ app.innerHTML = [
   '    <section class="briefing-section" id="briefing" aria-labelledby="briefing-title">',
   '      <div class="section-heading">',
   '        <div><p class="eyebrow">SEU PONTO DE PARTIDA</p><h2 id="briefing-title">Briefing de hoje</h2></div>',
-  '        <span class="quiet-label">Aguardando fontes</span>',
+  '        <span class="quiet-label" id="briefing-state">Aguardando fontes</span>',
   '      </div>',
   '      <article class="briefing-card" id="briefing-card">',
   '        <div class="briefing-orbit" aria-hidden="true"><span></span><span></span><span></span></div>',
@@ -658,6 +658,7 @@ briefingSections.hidden = true
 if (briefingDescription) briefingDescription.before(briefingSections)
 
 const briefingPollInterval = 5000
+const briefingRequestTimeout = 4000
 let renderedBriefingKey: string | null = null
 let briefingPollFailures = 0
 let briefingTimer: number | null = null
@@ -773,7 +774,10 @@ const renderBriefing = (briefing: Briefing | null): void => {
   if (!briefing) {
     if (briefingState) briefingState.textContent = briefingEmptyCopy.state
     if (briefingKicker) briefingKicker.textContent = briefingEmptyCopy.kicker
-    if (briefingHeadline) briefingHeadline.textContent = briefingEmptyCopy.headline
+    if (briefingHeadline) {
+      briefingHeadline.textContent = briefingEmptyCopy.headline
+      briefingHeadline.hidden = false
+    }
     if (briefingMetaText) briefingMetaText.textContent = briefingEmptyCopy.meta
     briefingSections.replaceChildren()
     briefingSections.hidden = true
@@ -783,7 +787,10 @@ const renderBriefing = (briefing: Briefing | null): void => {
 
   if (briefingState) briefingState.textContent = 'Recebido do agente'
   if (briefingKicker) briefingKicker.textContent = 'Seu briefing chegou'
-  if (briefingHeadline) briefingHeadline.textContent = briefing.headline
+  if (briefingHeadline) {
+    briefingHeadline.textContent = briefing.headline
+    briefingHeadline.hidden = briefing.headline.trim() === ''
+  }
   if (briefingMetaText) briefingMetaText.textContent = `${briefing.agent} · ${formatSyncTime(briefing.receivedAt)}`
   briefingSections.replaceChildren(...briefing.sections.map(makeBriefingSection))
   briefingSections.hidden = briefing.sections.length === 0
@@ -803,7 +810,10 @@ const loadBriefing = async (): Promise<void> => {
   briefingLoading = true
 
   try {
-    const response = await fetch('/api/briefing/today', { cache: 'no-store' })
+    const response = await fetch('/api/briefing/today', {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(briefingRequestTimeout),
+    })
     if (!response.ok) throw new Error('O servidor local não respondeu.')
 
     renderBriefing(parseBriefingResponse(await response.json()))
