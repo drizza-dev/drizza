@@ -64,7 +64,17 @@ export const githubPullRequestKind = "pull_request";
 const maxItemsPerDay = 200;
 
 export function githubPullRequestExternalId(repo: string, number: number): string {
-  return `${repo}#${number}`;
+  return `${repo}#${number}`.toLowerCase();
+}
+
+function itemKey(source: string, externalId: string): { source: string; externalId: string } {
+  return source === githubPullRequestSource
+    ? { source, externalId: externalId.toLowerCase() }
+    : { source, externalId };
+}
+
+function normalizeUrl(value: string | undefined): string | null {
+  return value === undefined ? null : new URL(value).href;
 }
 
 export function pushItems(database: DatabaseSync, input: PushItemsInput): PushItemsResult {
@@ -76,32 +86,41 @@ export function pushItems(database: DatabaseSync, input: PushItemsInput): PushIt
   try {
     const findOrigin = database.prepare("SELECT origin FROM items WHERE source = ? AND external_id = ?");
     const insert = database.prepare(
-      `INSERT INTO items (id, source, kind, external_id, title, url, summary, updated_at, origin, received_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'agent', ?)`,
+      `INSERT INTO items (
+         id, source, kind, external_id, title, url, summary, updated_at, origin, received_at, agent_touched_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'agent', ?, ?)`,
     );
     const enrichSynced = database.prepare(
-      `UPDATE items SET summary = COALESCE(?, summary), received_at = ?
+      `UPDATE items SET summary = COALESCE(?, summary), received_at = ?, agent_touched_at = ?
        WHERE source = ? AND external_id = ?`,
     );
-    const replaceAgent = database.prepare(
-      `UPDATE items SET kind = ?, title = ?, url = ?, summary = ?, updated_at = ?, received_at = ?
+    const mergeAgent = database.prepare(
+      `UPDATE items SET
+         kind = ?,
+         title = ?,
+         url = COALESCE(?, url),
+         summary = COALESCE(?, summary),
+         updated_at = COALESCE(?, updated_at),
+         received_at = ?,
+         agent_touched_at = ?
        WHERE source = ? AND external_id = ?`,
     );
 
     for (const item of input.items) {
-      const existing = findOrigin.get(item.source, item.external_id) as ItemOriginRow | undefined;
-      const url = item.url ?? null;
+      const { source, externalId } = itemKey(item.source, item.external_id);
+      const existing = findOrigin.get(source, externalId) as ItemOriginRow | undefined;
+      const url = normalizeUrl(item.url);
       const summary = item.summary ?? null;
       const updatedAt = item.updated_at ?? null;
 
       if (!existing) {
-        insert.run(randomUUID(), item.source, item.kind, item.external_id, item.title, url, summary, updatedAt, receivedAt);
+        insert.run(randomUUID(), source, item.kind, externalId, item.title, url, summary, updatedAt, receivedAt, receivedAt);
         result.inserted += 1;
       } else if (existing.origin === "sync") {
-        enrichSynced.run(summary, receivedAt, item.source, item.external_id);
+        enrichSynced.run(summary, receivedAt, receivedAt, source, externalId);
         result.updated += 1;
       } else {
-        replaceAgent.run(item.kind, item.title, url, summary, updatedAt, receivedAt, item.source, item.external_id);
+        mergeAgent.run(item.kind, item.title, url, summary, updatedAt, receivedAt, receivedAt, source, externalId);
         result.updated += 1;
       }
     }
@@ -155,10 +174,21 @@ export function upsertSyncedPullRequests(
   const synced = database
     .prepare("SELECT external_id FROM items WHERE origin = 'sync' AND source = ? AND kind = ?")
     .all(githubPullRequestSource, githubPullRequestKind) as Array<{ external_id: string }>;
-  const remove = database.prepare("DELETE FROM items WHERE origin = 'sync' AND source = ? AND external_id = ?");
+  const release = database.prepare(
+    `UPDATE items SET origin = 'agent'
+     WHERE origin = 'sync' AND source = ? AND external_id = ?
+       AND (summary IS NOT NULL OR agent_touched_at IS NOT NULL)`,
+  );
+  const remove = database.prepare(
+    `DELETE FROM items
+     WHERE origin = 'sync' AND source = ? AND external_id = ?
+       AND summary IS NULL AND agent_touched_at IS NULL`,
+  );
 
   for (const row of synced) {
-    if (!keep.has(row.external_id)) remove.run(githubPullRequestSource, row.external_id);
+    if (keep.has(row.external_id)) continue;
+    release.run(githubPullRequestSource, row.external_id);
+    remove.run(githubPullRequestSource, row.external_id);
   }
 }
 
@@ -170,8 +200,8 @@ export function getItemsForDay(database: DatabaseSync, date: string): StoredItem
     .prepare(
       `SELECT source, kind, external_id, origin, title, url, summary, updated_at, received_at
        FROM items
-       WHERE received_at >= ? AND received_at < ?
-       ORDER BY received_at DESC, rowid DESC
+       WHERE agent_touched_at >= ? AND agent_touched_at < ?
+       ORDER BY agent_touched_at DESC, rowid DESC
        LIMIT ?`,
     )
     .all(start, end, maxItemsPerDay) as unknown as ItemRow[];

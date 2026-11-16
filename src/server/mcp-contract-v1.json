@@ -4,7 +4,7 @@
     {
       "name": "push_briefing",
       "title": "Push briefing",
-      "description": "Store the briefing for one day in drizza. A second push for the same date replaces the previous one.",
+      "description": "Store the briefing for one day in drizza. A second push for the same date replaces the previous one. The input is closed: unknown fields are rejected, so check contract_version (in the initialize or server/discover _meta, key dev.drizza/contract_version) before sending a field from a newer contract.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -63,7 +63,7 @@
                               "minLength": 1,
                               "maxLength": 2048,
                               "pattern": "^https?://",
-                              "description": "Absolute http or https URL of the source."
+                              "description": "Absolute http or https URL of the source. URLs with a username or password are rejected."
                             },
                             "label": {
                               "type": "string",
@@ -160,7 +160,7 @@
     {
       "name": "push_items",
       "title": "Push items",
-      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it. Pull requests synced from GitHub use source \"github\" and external_id \"owner/repo#number\"; pushing that key enriches the synced item with your summary and keeps its title, url and updated_at.",
+      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it. Updates merge: an optional field you omit keeps its stored value, on items you pushed and on synced items alike; clearing a field is not supported yet. Pull requests synced from GitHub use source \"github\" and external_id \"owner/repo#number\", matched without regard to case; pushing that key enriches the synced item with your summary and keeps its title, url, kind and updated_at as synced. If a pull request you enriched or pushed leaves the sync, drizza keeps it as your item with its summary. URLs with a username or password are rejected, and stored URLs are normalized. The input is closed: unknown fields are rejected, so check contract_version (in the initialize or server/discover _meta, key dev.drizza/contract_version) before sending a field from a newer contract.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -191,7 +191,7 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 256,
-                  "description": "Identifier of the item inside its source. For GitHub pull requests, owner/repo#number."
+                  "description": "Identifier of the item inside its source. For GitHub pull requests, owner/repo#number, case insensitive."
                 },
                 "title": {
                   "type": "string",
@@ -203,7 +203,7 @@
                   "minLength": 1,
                   "maxLength": 2048,
                   "pattern": "^https?://",
-                  "description": "Absolute http or https URL of the item, without credentials."
+                  "description": "Absolute http or https URL of the item. URLs with a username or password are rejected."
                 },
                 "summary": {
                   "type": "string",
@@ -238,11 +238,11 @@
         "properties": {
           "inserted": {
             "type": "integer",
-            "description": "Items that did not exist before this push."
+            "description": "Items whose key did not exist before; a key repeated inside one push counts once here and once more in updated."
           },
           "updated": {
             "type": "integer",
-            "description": "Items that already existed, including synced items enriched with a summary. inserted plus updated equals the number of items pushed."
+            "description": "Items whose key already existed, including synced items enriched with a summary and keys repeated inside the same push. inserted plus updated equals the number of items pushed."
           }
         },
         "required": [
@@ -254,7 +254,7 @@
     {
       "name": "get_today",
       "title": "Get today",
-      "description": "Read what drizza already has for a day before pushing a new briefing. Without date, the day is today in the local time zone of the machine running drizza, not UTC.",
+      "description": "Read what drizza already has for a day before pushing a new briefing. Without date, the day is today in the local time zone of the machine running drizza, not UTC. The input is closed: unknown fields are rejected, so check contract_version (in the initialize or server/discover _meta, key dev.drizza/contract_version) before sending a field from a newer contract.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -451,7 +451,7 @@
                 "received_at"
               ]
             },
-            "description": "Items drizza stored or refreshed during the day, from push_items or from the GitHub sync, newest first, at most 200. The day is read in the local time zone of the machine running drizza. Fields without a value are omitted."
+            "description": "Items the agent pushed or enriched through push_items during the day, newest first, at most 200. A GitHub sync alone never makes an item appear here. The day is read in the local time zone of the machine running drizza. Fields without a value are omitted."
           }
         },
         "required": [

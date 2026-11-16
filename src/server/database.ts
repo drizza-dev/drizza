@@ -362,9 +362,10 @@ function migrate(database: DatabaseSync): void {
            updated_at TEXT,
            origin TEXT NOT NULL CHECK (origin IN ('sync', 'agent')),
            received_at TEXT NOT NULL,
+           agent_touched_at TEXT,
            UNIQUE (source, external_id)
          );
-         CREATE INDEX IF NOT EXISTS items_received_at ON items (received_at)`,
+         CREATE INDEX IF NOT EXISTS items_agent_touched_at ON items (agent_touched_at)`,
       );
       const appliedAt = new Date().toISOString();
       upsertSyncedPullRequests(database, readSyncedPullRequests(database), appliedAt);
