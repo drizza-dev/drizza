@@ -48,10 +48,10 @@
 
   <section class="section tinted" id="quickstart">
     <div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">Guia rápido</p><h2>Comece com um comando.</h2></div><p>Use uma versão compatível do Node.js, inicie o Drizza na sua máquina e abra o endereço local no navegador.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Guia rápido</p><h2>Comece pelo repositório.</h2></div><p>Use uma versão compatível do Node.js, gere o build do Drizza a partir do código-fonte, inicie-o na sua máquina e abra o endereço local no navegador.</p></div>
       <div class="quickstart-card">
         <article class="quickstart-step"><span class="step-number">01</span><h3>Confira o Node.js</h3><p>Versão necessária: <code class="inline-code">^22.13.0 || &gt;=23.4.0</code>.</p></article>
-        <article class="quickstart-step"><span class="step-number">02</span><h3>Inicie o Drizza</h3><p>Execute o pacote no terminal.</p><pre class="command-block"><code>npx drizza</code></pre></article>
+        <article class="quickstart-step"><span class="step-number">02</span><h3>Inicie o Drizza</h3><p>O Drizza ainda não está no npm. Num clone do repositório, rode <code class="inline-code">pnpm install</code> e <code class="inline-code">pnpm build</code>, e então:</p><pre class="command-block"><code>node dist-node/cli/index.js</code></pre></article>
         <article class="quickstart-step"><span class="step-number">03</span><h3>Abra o app local</h3><p>Endereço padrão: <a href="http://127.0.0.1:4340/">http://127.0.0.1:4340/</a>.</p></article>
       </div>
     </div>
@@ -61,24 +61,25 @@
     <div class="section-heading"><div><p class="eyebrow">Guias</p><h2>Encontre o próximo passo.</h2></div><p>Orientações práticas para rodar o Drizza localmente e contribuir com o projeto open source.</p></div>
     <div class="card-grid"><a class="card" href="/pt/guide/run-locally/"><span class="card-label">01 · Instalação</span><h3>Rodar localmente</h3><p>Instale o Drizza, inicie o servidor local e encontre o banco de dados.</p><span class="card-arrow">Ler o guia →</span></a>
 <a class="card" href="/pt/guide/accounts/"><span class="card-label">02 · Privacidade</span><h3>Contas e dados</h3><p>Veja o que fica na sua máquina e se é preciso ter uma conta.</p><span class="card-arrow">Ler o guia →</span></a>
-<a class="card" href="/pt/guide/mcp/"><span class="card-label">03 · Agentes</span><h3>MCP</h3><p>Consulte o status atual da integração MCP local.</p><span class="card-arrow">Ler o guia →</span></a>
-<a class="card" href="/pt/guide/contributing/"><span class="card-label">04 · Comunidade</span><h3>Contribuir</h3><p>Configure o repositório e prepare uma contribuição focada.</p><span class="card-arrow">Ler o guia →</span></a></div>
+<a class="card" href="/pt/guide/github/"><span class="card-label">03 · Fontes</span><h3>GitHub</h3><p>Conecte o GitHub com o gh ou com um token fine-grained e preencha os cards de PRs.</p><span class="card-arrow">Ler o guia →</span></a>
+<a class="card" href="/pt/guide/mcp/"><span class="card-label">04 · Agentes</span><h3>MCP</h3><p>Consulte o status atual da integração MCP local.</p><span class="card-arrow">Ler o guia →</span></a>
+<a class="card" href="/pt/guide/contributing/"><span class="card-label">05 · Comunidade</span><h3>Contribuir</h3><p>Configure o repositório e prepare uma contribuição focada.</p><span class="card-arrow">Ler o guia →</span></a></div>
   </section>
 
   <section class="section tinted" id="security">
     <div class="wrap">
-      <div class="section-heading"><div><p class="eyebrow">Segurança</p><h2>Seus dados ficam locais.</h2></div><p>O Drizza roda em loopback. O comportamento planejado para as integrações com provedores é que o processo local envie as requisições diretamente a cada provedor; os tokens não devem passar por serviços hospedados pelo Drizza.</p></div>
+      <div class="section-heading"><div><p class="eyebrow">Segurança</p><h2>Seus dados ficam locais.</h2></div><p>O Drizza roda em loopback. A integração com o GitHub envia as requisições direto do processo local ao GitHub; os tokens não passam por serviços hospedados pelo Drizza.</p></div>
       <div class="security-strip">
         <article class="security-item"><h3>Apenas loopback</h3><p>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>, não na interface da rede.</p></article>
         <article class="security-item"><h3>Banco local</h3><p>Os dados SQLite ficam em <code class="inline-code">~/.drizza/drizza.db</code>.</p></article>
-        <article class="security-item"><h3>Instruções de tokens em andamento</h3><p>A configuração de provedores será publicada em breve. O comportamento planejado é manter os tokens fora do SQLite, dos logs, das respostas da API e da interface. O arquivo local do token MCP e os passos para revogá-lo serão documentados quando o caminho for definido.</p></article>
+        <article class="security-item"><h3>Tokens fora do banco</h3><p>O banco SQLite registra só a origem do token do GitHub (<code class="inline-code">gh</code> ou <code class="inline-code">env</code>), nunca o valor, e o token não aparece nos logs, nas respostas da API nem na interface. O arquivo local do token MCP e os passos para revogá-lo serão documentados quando o caminho for definido.</p></article>
       </div>
     </div>
   </section>
 
   <section class="section wrap" id="integrations">
-    <div class="section-heading"><div><p class="eyebrow">Integrações</p><h2>Guias de provedores em breve.</h2></div><p>Os comandos de configuração e as permissões serão publicados quando cada integração estiver pronta. Ainda não há comandos de provedores neste guia.</p></div>
-    <div class="card-grid"><article class="card coming-soon"><span class="card-label">Em breve</span><h3>GitHub</h3><p>As etapas de conexão, permissões e gerenciamento de tokens serão publicadas com a integração do GitHub.</p></article>
+    <div class="section-heading"><div><p class="eyebrow">Integrações</p><h2>Conecte suas fontes.</h2></div><p>O GitHub já pode ser conectado. As demais integrações aparecem com o status atual, e os comandos e permissões de cada uma são publicados quando ela fica pronta.</p></div>
+    <div class="card-grid"><a class="card" href="/pt/guide/github/"><span class="card-label">Disponível</span><h3>GitHub</h3><p>Conecte com o gh ou com um token fine-grained, veja a permissão mínima e os limites conhecidos.</p><span class="card-arrow">Ler o guia →</span></a>
 <article class="card coming-soon"><span class="card-label">Em breve</span><h3>MCP</h3><p>A configuração de agentes e a revogação do token local serão publicadas quando a integração MCP estiver pronta.</p></article>
 <article class="card coming-soon"><span class="card-label">Em breve</span><h3>Slack</h3><p>As instruções de conexão com o Slack serão publicadas com a integração.</p></article></div>
   </section>

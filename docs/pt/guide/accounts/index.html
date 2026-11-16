@@ -37,7 +37,7 @@
   <div class="guide-layout">
     <nav class="guide-nav" aria-label="Guias">
   <p class="eyebrow">Guias</p>
-  <a href="/pt/guide/run-locally/">Rodar localmente</a> <a href="/pt/guide/accounts/" aria-current="page">Contas</a> <a href="/pt/guide/mcp/">MCP</a> <a href="/pt/guide/contributing/">Contribuir</a>
+  <a href="/pt/guide/run-locally/">Rodar localmente</a> <a href="/pt/guide/accounts/" aria-current="page">Contas</a> <a href="/pt/guide/github/">GitHub</a> <a href="/pt/guide/mcp/">MCP</a> <a href="/pt/guide/contributing/">Contribuir</a>
 </nav>
     <article class="prose">
       <header class="guide-intro"><p class="eyebrow">Guia open source</p><h1>Contas e dados locais</h1><p>O app local open source não exige uma conta Drizza.</p></header>
@@ -45,12 +45,13 @@
 <p>Você não precisa de uma conta Drizza para usar o app local open source. O Drizza roda na sua máquina, e o banco SQLite local fica em <code class="inline-code">~/.drizza/drizza.db</code>.</p>
 
 <h2 id="provider-accounts">Contas de provedores</h2>
-<p>As integrações com GitHub, MCP e Slack ainda não estão disponíveis neste guia. As etapas de conexão, permissões e instruções para revogar tokens serão documentadas quando as integrações correspondentes estiverem prontas.</p>
-<div class="warning-box"><p><strong>Não cole credenciais neste guia nem em uma issue.</strong> Aguarde as instruções específicas do provedor antes de conectar uma conta.</p></div>
+<p>O GitHub se conecta pelo seu próprio login no GitHub CLI ou por um token de acesso pessoal fine-grained. Nenhuma conta Drizza entra nisso. Veja <a href="/pt/guide/github/">Conectar o GitHub</a> para os passos, a permissão mínima e como revogar o acesso.</p>
+<p>Para agentes, veja o <a href="/pt/guide/mcp/">guia de MCP</a>. A integração com o Slack será publicada em breve.</p>
+<div class="warning-box"><p><strong>Não cole credenciais neste guia nem em uma issue.</strong> Siga as instruções específicas do provedor antes de conectar uma conta.</p></div>
 
 <h2 id="privacy">Privacidade local</h2>
-<p>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>. O comportamento planejado para as integrações com provedores é que o processo local use as credenciais diretamente com os provedores, sem gravá-las no banco SQLite nem nos logs do Drizza. Os tokens não devem passar por serviços hospedados pelo Drizza.</p>
-      <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/run-locally/">← Rodar localmente</a><a href="/pt/guide/mcp/">MCP →</a></nav>
+<p>O servidor local faz bind em <code class="inline-code">127.0.0.1</code>. A integração com o GitHub usa as suas credenciais direto com o GitHub, a partir do processo local. O banco SQLite registra só a origem do token, nunca o valor, e o token não é gravado nos logs. Os tokens não passam por serviços hospedados pelo Drizza.</p>
+      <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/run-locally/">← Rodar localmente</a><a href="/pt/guide/github/">GitHub →</a></nav>
     </article>
   </div>
 </main>
