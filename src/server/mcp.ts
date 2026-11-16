@@ -21,6 +21,7 @@ const legacyVersions = ["2025-11-25", "2025-06-18", "2025-03-26"];
 const supportedVersions = [modernVersion, ...legacyVersions];
 const maxBodyBytes = 1024 * 1024;
 const toolNames = new Set(contract.tools.map((tool) => tool.name));
+const contractMeta = { "dev.drizza/contract_version": contract.contract_version };
 
 export async function handleMcpRequest(request: IncomingMessage, options: McpOptions): Promise<McpReply> {
   if (request.method !== "POST") {
@@ -107,6 +108,7 @@ function handleLegacy(
         protocolVersion,
         capabilities: { tools: {} },
         serverInfo: serverInfo(options),
+        _meta: contractMeta,
       });
     }
     case "ping":
@@ -177,7 +179,7 @@ function handleModern(
         resultType: "complete",
         supportedVersions,
         capabilities: { tools: {} },
-        _meta: modernMeta,
+        _meta: { ...modernMeta, ...contractMeta },
       });
     case "ping":
       return rpcResult(id, { resultType: "complete", _meta: modernMeta });
