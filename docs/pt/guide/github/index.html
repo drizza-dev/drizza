@@ -95,7 +95,7 @@
 
 <h2 id="troubleshooting">Solução de problemas</h2>
 <h3 id="no-token">O dashboard diz que o token está ausente</h3>
-<p>A fonte GitHub mostra <strong>Token ausente</strong>, e uma mensagem de status explica o que fazer. Nem <code class="inline-code">gh auth token</code> nem <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> devolveram token para o processo do Drizza. Rode <code class="inline-code">gh auth status</code> com o mesmo usuário, ou confirme que a variável foi exportada no shell que iniciou o Drizza, Se você exportou a variável depois de iniciar o Drizza, reinicie-o a partir desse shell.</p>
+<p>A fonte GitHub mostra <strong>Token ausente</strong>, e uma mensagem de status explica o que fazer. Nem <code class="inline-code">gh auth token</code> nem <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> devolveram token para o processo do Drizza. Rode <code class="inline-code">gh auth status</code> com o mesmo usuário, ou confirme que a variável foi exportada no shell que iniciou o Drizza. Se você exportou a variável depois de iniciar o Drizza, reinicie-o a partir desse shell.</p>
 <h3 id="keychain">O GitHub CLI não consegue ler o keychain</h3>
 <p>Por SSH ou em outras sessões que não são de login, o GitHub CLI pode não conseguir ler um token guardado no keychain do sistema. O Drizza detecta isso e sugere o comando abaixo. Faça login de novo com armazenamento em arquivo:</p>
 <pre class="command-block"><code>gh auth login --insecure-storage</code></pre>

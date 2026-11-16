@@ -95,7 +95,7 @@
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 <h3 id="no-token">The dashboard says the token is missing</h3>
-<p>The dashboard interface is in Brazilian Portuguese: the GitHub source shows <strong>Token ausente</strong>, and a status message explains what to do. Neither <code class="inline-code">gh auth token</code> nor <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> returned a token for the Drizza process. Run <code class="inline-code">gh auth status</code> as the same user, or confirm that the variable was exported in the shell that started Drizza, If you exported the variable after starting Drizza, restart it from that shell.</p>
+<p>The dashboard interface is in Brazilian Portuguese: the GitHub source shows <strong>Token ausente</strong>, and a status message explains what to do. Neither <code class="inline-code">gh auth token</code> nor <code class="inline-code">DRIZZA_GITHUB_TOKEN</code> returned a token for the Drizza process. Run <code class="inline-code">gh auth status</code> as the same user, or confirm that the variable was exported in the shell that started Drizza. If you exported the variable after starting Drizza, restart it from that shell.</p>
 <h3 id="keychain">The GitHub CLI cannot read the keychain</h3>
 <p>Over SSH or in other non-login sessions, the GitHub CLI may fail to read a token stored in the system keychain. Drizza detects this and suggests the command below. Sign in again with file-based storage:</p>
 <pre class="command-block"><code>gh auth login --insecure-storage</code></pre>
