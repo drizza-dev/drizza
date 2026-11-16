@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { upsertSyncedPullRequests, type SyncedPullRequest } from "./items.js";
 
 export type SyncRunStatus = "running" | "ok" | "error";
 export type TokenSource = "gh" | "env";
@@ -232,6 +233,8 @@ export function completeGithubSync(
     replaceRole("review", reviews);
     replaceRole("authored", authored);
 
+    upsertSyncedPullRequests(database, readSyncedPullRequests(database), finishedAt);
+
     const countRole = (role: GithubPrRole): number => {
       const row = database
         .prepare("SELECT COUNT(*) AS count FROM github_prs WHERE role = ?")
@@ -342,11 +345,49 @@ function migrate(database: DatabaseSync): void {
         .run(3, new Date().toISOString());
     }
 
+    const itemsMigration = database
+      .prepare("SELECT version FROM schema_migrations WHERE version = ?")
+      .get(4);
+
+    if (!itemsMigration) {
+      database.exec(
+        `CREATE TABLE IF NOT EXISTS items (
+           id TEXT PRIMARY KEY NOT NULL,
+           source TEXT NOT NULL,
+           kind TEXT NOT NULL,
+           external_id TEXT NOT NULL,
+           title TEXT NOT NULL,
+           url TEXT,
+           summary TEXT,
+           updated_at TEXT,
+           origin TEXT NOT NULL CHECK (origin IN ('sync', 'agent')),
+           received_at TEXT NOT NULL,
+           UNIQUE (source, external_id)
+         );
+         CREATE INDEX IF NOT EXISTS items_received_at ON items (received_at)`,
+      );
+      const appliedAt = new Date().toISOString();
+      upsertSyncedPullRequests(database, readSyncedPullRequests(database), appliedAt);
+      database
+        .prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)")
+        .run(4, appliedAt);
+    }
+
     database.exec("COMMIT");
   } catch (error) {
     database.exec("ROLLBACK");
     throw error;
   }
+}
+
+function readSyncedPullRequests(database: DatabaseSync): SyncedPullRequest[] {
+  return database
+    .prepare(
+      `SELECT repo, number, title, html_url AS url, updated_at AS updatedAt
+       FROM github_prs
+       ORDER BY updated_at DESC, number DESC`,
+    )
+    .all() as unknown as SyncedPullRequest[];
 }
 
 function markInterruptedRuns(database: DatabaseSync): void {

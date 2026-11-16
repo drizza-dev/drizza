@@ -160,7 +160,7 @@
     {
       "name": "push_items",
       "title": "Push items",
-      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it.",
+      "description": "Store items such as threads or pull requests in drizza. Items are matched by source and external_id, so pushing the same item again updates it. Pull requests synced from GitHub use source \"github\" and external_id \"owner/repo#number\"; pushing that key enriches the synced item with your summary and keeps its title, url and updated_at.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -170,39 +170,79 @@
           },
           "items": {
             "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
             "items": {
               "type": "object",
               "properties": {
                 "source": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32,
+                  "description": "Where the item comes from, such as github or slack. Same value item_refs uses in push_briefing."
+                },
+                "kind": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 32,
+                  "description": "What the item is, such as pull_request or thread."
                 },
                 "external_id": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256,
+                  "description": "Identifier of the item inside its source. For GitHub pull requests, owner/repo#number."
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048,
+                  "pattern": "^https?://",
+                  "description": "Absolute http or https URL of the item, without credentials."
                 },
                 "summary": {
-                  "type": "string"
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                  "description": "Short summary written by the agent."
+                },
+                "updated_at": {
+                  "type": "string",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?(Z|[+-][0-9]{2}:[0-9]{2})$",
+                  "description": "When the item last changed in its source, as an RFC 3339 timestamp."
                 }
               },
               "required": [
                 "source",
-                "external_id"
-              ]
+                "kind",
+                "external_id",
+                "title"
+              ],
+              "additionalProperties": false
             }
           }
         },
         "required": [
           "contract_version",
           "items"
-        ]
+        ],
+        "additionalProperties": false
       },
       "outputSchema": {
         "type": "object",
         "properties": {
           "inserted": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Items that did not exist before this push."
           },
           "updated": {
-            "type": "integer"
+            "type": "integer",
+            "description": "Items that already existed, including synced items enriched with a summary. inserted plus updated equals the number of items pushed."
           }
         },
         "required": [
@@ -372,6 +412,9 @@
                 "source": {
                   "type": "string"
                 },
+                "kind": {
+                  "type": "string"
+                },
                 "external_id": {
                   "type": "string"
                 },
@@ -382,17 +425,33 @@
                     "agent"
                   ]
                 },
+                "title": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
                 "summary": {
                   "type": "string"
+                },
+                "updated_at": {
+                  "type": "string"
+                },
+                "received_at": {
+                  "type": "string",
+                  "description": "When drizza last stored this item, from a push or a sync."
                 }
               },
               "required": [
                 "source",
+                "kind",
                 "external_id",
-                "origin"
+                "origin",
+                "title",
+                "received_at"
               ]
             },
-            "description": "Items for the day. Always empty until push_items lands."
+            "description": "Items drizza stored or refreshed during the day, from push_items or from the GitHub sync, newest first, at most 200. The day is read in the local time zone of the machine running drizza. Fields without a value are omitted."
           }
         },
         "required": [

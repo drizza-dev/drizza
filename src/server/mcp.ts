@@ -1,6 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
+import { getItemsForDay, pushItems, type PushItemsInput } from "./items.js";
 import { compileSchema, maxSchemaIssues, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
@@ -234,6 +235,8 @@ function callTool(id: JsonRpcId, params: JsonObject, envelope: JsonObject, datab
   switch (name) {
     case "push_briefing":
       return callPushBriefing(id, args as unknown as BriefingInput, envelope, database);
+    case "push_items":
+      return callPushItems(id, args as unknown as PushItemsInput, envelope, database);
     case "get_today":
       return callGetToday(id, args, envelope, database);
     default:
@@ -258,7 +261,44 @@ function callGetToday(id: JsonRpcId, args: JsonObject, envelope: JsonObject, dat
     return toolError(id, envelope, describeIssues([{ path: "/date", message: "must be a real calendar date" }]));
   }
 
-  return toolResult(id, envelope, { date, briefing: getBriefing(database, date), items: [] });
+  return toolResult(id, envelope, {
+    date,
+    briefing: getBriefing(database, date),
+    items: getItemsForDay(database, date),
+  });
+}
+
+function callPushItems(id: JsonRpcId, input: PushItemsInput, envelope: JsonObject, database: DatabaseSync): McpReply {
+  const issues = itemsRuntimeIssues(input);
+
+  if (issues.length > 0) {
+    return toolError(id, envelope, describeIssues(issues));
+  }
+
+  return toolResult(id, envelope, { ...pushItems(database, input) });
+}
+
+function itemsRuntimeIssues(input: PushItemsInput): SchemaIssue[] {
+  const issues: SchemaIssue[] = [];
+
+  input.items.forEach((item, index) => {
+    if (item.url !== undefined && !isWebUrl(item.url)) {
+      issues.push({ path: `/items/${index}/url`, message: "must be an absolute http: or https: URL without credentials" });
+    }
+
+    if (item.updated_at !== undefined && !isTimestamp(item.updated_at)) {
+      issues.push({ path: `/items/${index}/updated_at`, message: "must be a real RFC 3339 timestamp" });
+    }
+  });
+
+  return issues;
+}
+
+function isTimestamp(value: string): boolean {
+  const match = /^([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})/.exec(value);
+  if (!match || !isCalendarDate(match[1])) return false;
+  const [hours, minutes, seconds] = [Number(match[2]), Number(match[3]), Number(match[4])];
+  return hours < 24 && minutes < 60 && seconds < 60 && Number.isFinite(Date.parse(value));
 }
 
 function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
