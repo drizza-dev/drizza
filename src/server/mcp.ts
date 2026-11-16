@@ -1,7 +1,7 @@
 import type { IncomingMessage } from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import { getBriefing, localToday, pushBriefing, type BriefingInput } from "./briefings.js";
-import { compileSchema, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
+import { compileSchema, maxSchemaIssues, type SchemaIssue, type SchemaValidator } from "./json-schema.js";
 import contract from "./mcp-contract-v1.json" with { type: "json" };
 import { bearerMatches } from "./mcp-token.js";
 
@@ -32,6 +32,10 @@ const inputValidators = new Map<string, SchemaValidator>(
     compileSchema(tool.inputSchema),
   ]),
 );
+
+for (const tool of contract.tools as Array<{ outputSchema?: unknown }>) {
+  if (tool.outputSchema !== undefined) compileSchema(tool.outputSchema);
+}
 
 export async function handleMcpRequest(
   request: IncomingMessage,
@@ -270,7 +274,7 @@ function briefingRuntimeIssues(input: BriefingInput): SchemaIssue[] {
         if (!isWebUrl(link.url)) {
           issues.push({
             path: `/sections/${sectionIndex}/bullets/${bulletIndex}/links/${linkIndex}/url`,
-            message: "must be an absolute http: or https: URL",
+            message: "must be an absolute http: or https: URL without credentials",
           });
         }
       });
@@ -289,7 +293,7 @@ function isCalendarDate(value: string): boolean {
 function isWebUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
+    return (url.protocol === "http:" || url.protocol === "https:") && url.username === "" && url.password === "";
   } catch {
     return false;
   }
@@ -297,7 +301,9 @@ function isWebUrl(value: string): boolean {
 
 function describeIssues(issues: SchemaIssue[]): string {
   const lines = issues.slice(0, maxReportedIssues).map((issue) => `${issue.path} ${issue.message}`);
-  const more = issues.length > maxReportedIssues ? [`and ${issues.length - maxReportedIssues} more`] : [];
+  const hidden = issues.length - maxReportedIssues;
+  const more =
+    hidden <= 0 ? [] : issues.length >= maxSchemaIssues ? [`and at least ${hidden} more`] : [`and ${hidden} more`];
   return ["Invalid arguments:", ...lines, ...more].join("\n");
 }
 

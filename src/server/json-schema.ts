@@ -5,6 +5,9 @@ export interface SchemaIssue {
 
 export type SchemaValidator = (value: unknown) => SchemaIssue[];
 
+export const maxSchemaIssues = 50;
+const maxEchoedKeyLength = 64;
+
 type SchemaObject = Record<string, unknown>;
 
 const supportedKeywords = new Set([
@@ -32,7 +35,7 @@ export function compileSchema(schema: unknown): SchemaValidator {
   return (value) => {
     const issues: SchemaIssue[] = [];
     validate(schema as SchemaObject, value, "", issues, patterns);
-    return issues;
+    return issues.slice(0, maxSchemaIssues);
   };
 }
 
@@ -94,6 +97,8 @@ function validate(
   issues: SchemaIssue[],
   patterns: Map<string, RegExp>,
 ): void {
+  if (issues.length >= maxSchemaIssues) return;
+
   const at = path || "/";
 
   if (schema.type !== undefined) {
@@ -131,9 +136,12 @@ function validate(
     }
     if (typeof schema.maxItems === "number" && value.length > schema.maxItems) {
       issues.push({ path: at, message: `must have at most ${schema.maxItems} items` });
+      return;
     }
     if (isObject(schema.items)) {
-      value.forEach((item, index) => validate(schema.items as SchemaObject, item, `${path}/${index}`, issues, patterns));
+      for (let index = 0; index < value.length && issues.length < maxSchemaIssues; index += 1) {
+        validate(schema.items as SchemaObject, value[index], `${path}/${index}`, issues, patterns);
+      }
     }
   }
 
@@ -145,11 +153,12 @@ function validate(
     }
 
     for (const [name, child] of Object.entries(value)) {
+      if (issues.length >= maxSchemaIssues) break;
       const childSchema = Object.hasOwn(properties, name) ? properties[name] : undefined;
       if (isObject(childSchema)) {
         validate(childSchema, child, `${path}/${escapePointer(name)}`, issues, patterns);
       } else if (schema.additionalProperties === false) {
-        issues.push({ path: `${path}/${escapePointer(name)}`, message: "is not allowed" });
+        issues.push({ path: `${path}/${escapePointer(truncateKey(name))}`, message: "is not allowed" });
       }
     }
   }
@@ -174,6 +183,11 @@ function matchesType(type: string, value: unknown): boolean {
     default:
       return false;
   }
+}
+
+function truncateKey(name: string): string {
+  const codePoints = [...name];
+  return codePoints.length > maxEchoedKeyLength ? `${codePoints.slice(0, maxEchoedKeyLength).join("")}...` : name;
 }
 
 function escapePointer(name: string): string {

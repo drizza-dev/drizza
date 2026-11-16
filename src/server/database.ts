@@ -81,7 +81,7 @@ export function openDatabase(databasePath: string): DatabaseSync {
   const database = new DatabaseSync(databasePath);
 
   try {
-    database.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+    database.exec("PRAGMA busy_timeout = 3000; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
     migrate(database);
     markInterruptedRuns(database);
     return database;
