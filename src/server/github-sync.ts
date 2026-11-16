@@ -200,7 +200,7 @@ async function searchPullRequests(token: string, role: GithubPrRole): Promise<Gi
     throw new GithubSyncError("O GitHub retornou uma resposta inválida. Tente novamente.");
   }
 
-  if (!Array.isArray(payload.items)) {
+  if (typeof payload.incomplete_results !== "boolean" || !Array.isArray(payload.items)) {
     throw new GithubSyncError("O GitHub retornou uma resposta inválida. Tente novamente.");
   }
 
