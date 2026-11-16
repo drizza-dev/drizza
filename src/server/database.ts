@@ -4,6 +4,29 @@ import { DatabaseSync } from "node:sqlite";
 
 export type SyncRunStatus = "running" | "ok" | "error";
 export type TokenSource = "gh" | "env";
+export type GithubPrRole = "review" | "authored";
+
+export interface GithubPr {
+  id: number;
+  repo: string;
+  number: number;
+  title: string;
+  url: string;
+  author: string;
+  draft: boolean;
+  updatedAt: string;
+}
+
+export interface GithubPrRecord extends GithubPr {
+  role: GithubPrRole;
+  nodeId: string;
+  createdAt: string;
+}
+
+export interface GithubPrSearchResult {
+  items: GithubPrRecord[];
+  incomplete: boolean;
+}
 
 export interface SyncRun {
   id: string;
@@ -38,6 +61,21 @@ interface RunningRow {
   running: number;
 }
 
+interface GithubPrRow {
+  id: number;
+  repo: string;
+  number: number;
+  title: string;
+  html_url: string;
+  author_login: string;
+  draft: number;
+  updated_at: string;
+}
+
+interface CountRow {
+  count: number;
+}
+
 export function openDatabase(databasePath: string): DatabaseSync {
   mkdirSync(dirname(databasePath), { recursive: true });
   const database = new DatabaseSync(databasePath);
@@ -54,6 +92,7 @@ export function openDatabase(databasePath: string): DatabaseSync {
 }
 
 export function getSyncStatus(database: DatabaseSync): SyncStatus {
+  expireStaleRuns(database, new Date().toISOString());
   const runningRow = database
     .prepare("SELECT EXISTS(SELECT 1 FROM sync_runs WHERE status = 'running') AS running")
     .get() as RunningRow | undefined;
@@ -71,6 +110,148 @@ export function getSyncStatus(database: DatabaseSync): SyncStatus {
     running: Boolean(runningRow?.running),
     last: lastRow ? toSyncRun(lastRow) : null,
   };
+}
+
+export function getGithubPrs(database: DatabaseSync): { reviews: GithubPr[]; authored: GithubPr[] } {
+  const readRole = (role: GithubPrRole): GithubPr[] => {
+    const rows = database
+      .prepare(
+        `SELECT id, repo, number, title, html_url, author_login, draft, updated_at
+         FROM github_prs
+         WHERE role = ?
+         ORDER BY updated_at DESC, number DESC`,
+      )
+      .all(role) as GithubPrRow[];
+
+    return rows.map((row) => ({
+      id: row.id,
+      repo: row.repo,
+      number: row.number,
+      title: row.title,
+      url: row.html_url,
+      author: row.author_login,
+      draft: row.draft !== 0,
+      updatedAt: row.updated_at,
+    }));
+  };
+
+  return { reviews: readRole("review"), authored: readRole("authored") };
+}
+
+const staleRunMs = 5 * 60 * 1000;
+
+function expireStaleRuns(database: DatabaseSync, now: string): void {
+  database
+    .prepare(
+      `UPDATE sync_runs
+       SET status = 'error', finished_at = ?, error = ?
+       WHERE status = 'running' AND started_at < ?`,
+    )
+    .run(
+      now,
+      "Execução anterior interrompida antes da conclusão.",
+      new Date(Date.parse(now) - staleRunMs).toISOString(),
+    );
+}
+
+export function startSyncRun(database: DatabaseSync, id: string, startedAt: string): boolean {
+  database.exec("BEGIN IMMEDIATE");
+
+  try {
+    expireStaleRuns(database, startedAt);
+
+    const activeRun = database
+      .prepare("SELECT 1 AS running FROM sync_runs WHERE status = 'running' LIMIT 1")
+      .get() as RunningRow | undefined;
+
+    if (activeRun) {
+      database.exec("COMMIT");
+      return false;
+    }
+
+    database
+      .prepare("INSERT INTO sync_runs (id, started_at, status) VALUES (?, ?, 'running')")
+      .run(id, startedAt);
+    database.exec("COMMIT");
+    return true;
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function setSyncRunTokenSource(database: DatabaseSync, id: string, source: TokenSource): void {
+  database.prepare("UPDATE sync_runs SET token_source = ? WHERE id = ?").run(source, id);
+}
+
+export function failSyncRun(database: DatabaseSync, id: string, finishedAt: string, message: string): void {
+  database
+    .prepare("UPDATE sync_runs SET status = 'error', finished_at = ?, error = ? WHERE id = ?")
+    .run(finishedAt, message, id);
+}
+
+export function completeGithubSync(
+  database: DatabaseSync,
+  id: string,
+  reviews: GithubPrSearchResult,
+  authored: GithubPrSearchResult,
+  finishedAt: string,
+): void {
+  database.exec("BEGIN IMMEDIATE");
+
+  try {
+    const replaceRole = (role: GithubPrRole, result: GithubPrSearchResult): void => {
+      if (result.incomplete) return;
+
+      database.prepare("DELETE FROM github_prs WHERE role = ?").run(role);
+      const insert = database.prepare(
+        `INSERT INTO github_prs (
+           id, role, node_id, repo, number, title, html_url, author_login,
+           draft, created_at, updated_at, synced_run_id
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      );
+
+      for (const item of result.items) {
+        insert.run(
+          item.id,
+          role,
+          item.nodeId,
+          item.repo,
+          item.number,
+          item.title,
+          item.url,
+          item.author,
+          item.draft ? 1 : 0,
+          item.createdAt,
+          item.updatedAt,
+          id,
+        );
+      }
+    };
+
+    replaceRole("review", reviews);
+    replaceRole("authored", authored);
+
+    const countRole = (role: GithubPrRole): number => {
+      const row = database
+        .prepare("SELECT COUNT(*) AS count FROM github_prs WHERE role = ?")
+        .get(role) as CountRow | undefined;
+      return row?.count ?? 0;
+    };
+
+    database
+      .prepare(
+        `UPDATE sync_runs
+         SET status = 'ok', finished_at = ?, reviews_count = ?, authored_count = ?,
+             incomplete = ?, error = NULL
+         WHERE id = ?`,
+      )
+      .run(finishedAt, countRole("review"), countRole("authored"), Number(reviews.incomplete || authored.incomplete), id);
+    database.exec("COMMIT");
+  } catch (error) {
+    database.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 function migrate(database: DatabaseSync): void {
@@ -132,6 +313,33 @@ function migrate(database: DatabaseSync): void {
       database
         .prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)")
         .run(2, new Date().toISOString());
+    }
+
+    const githubPrsMigration = database
+      .prepare("SELECT version FROM schema_migrations WHERE version = ?")
+      .get(3);
+
+    if (!githubPrsMigration) {
+      database.exec(
+        `CREATE TABLE IF NOT EXISTS github_prs (
+           id INTEGER NOT NULL,
+           role TEXT NOT NULL CHECK (role IN ('review', 'authored')),
+           node_id TEXT NOT NULL,
+           repo TEXT NOT NULL,
+           number INTEGER NOT NULL CHECK (number > 0),
+           title TEXT NOT NULL,
+           html_url TEXT NOT NULL,
+           author_login TEXT NOT NULL,
+           draft INTEGER NOT NULL CHECK (draft IN (0, 1)),
+           created_at TEXT NOT NULL,
+           updated_at TEXT NOT NULL,
+           synced_run_id TEXT NOT NULL REFERENCES sync_runs(id),
+           PRIMARY KEY (id, role)
+         )`,
+      );
+      database
+        .prepare("INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)")
+        .run(3, new Date().toISOString());
     }
 
     database.exec("COMMIT");
