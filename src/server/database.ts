@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { upsertSyncedPullRequests, type SyncedPullRequest } from "./items.js";
@@ -78,7 +78,8 @@ interface CountRow {
 }
 
 export function openDatabase(databasePath: string): DatabaseSync {
-  mkdirSync(dirname(databasePath), { recursive: true });
+  mkdirSync(dirname(databasePath), { recursive: true, mode: 0o700 });
+  createPrivateFile(databasePath);
   const database = new DatabaseSync(databasePath);
 
   try {
@@ -89,6 +90,14 @@ export function openDatabase(databasePath: string): DatabaseSync {
   } catch (error) {
     database.close();
     throw error;
+  }
+}
+
+function createPrivateFile(path: string): void {
+  try {
+    writeFileSync(path, "", { flag: "wx", mode: 0o600 });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
   }
 }
 

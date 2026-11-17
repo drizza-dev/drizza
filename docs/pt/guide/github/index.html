@@ -87,10 +87,10 @@
 
 <h2 id="limits">Limites conhecidos</h2>
 <ul>
-  <li><strong>100 pull requests por card.</strong> Cada busca lê uma única página de até 100 resultados, então um card mostra no máximo 100 PRs. O que passar disso fica de fora, sem aviso no dashboard.</li>
+  <li><strong>1.000 pull requests por card.</strong> Cada busca lê páginas de 100 resultados até trazer todos, até os 1.000 resultados que a API de busca do GitHub devolve. Além disso, o dashboard mostra um sync parcial. O Drizza 0.1.0 lê uma única página, então lá um card mostra no máximo 100 PRs.</li>
   <li><strong>Resultados parciais.</strong> Quando o GitHub informa que uma busca estourou o tempo (<code class="inline-code">incomplete_results</code>), o Drizza mantém o cache anterior daquele card e o dashboard mostra um sync parcial.</li>
   <li><strong>Um dono por token de acesso pessoal.</strong> Um token fine-grained só alcança recursos privados do seu resource owner. PRs privadas de outros donos não aparecem. O token do GitHub CLI não tem esse limite.</li>
-  <li><strong>Limite de buscas.</strong> O GitHub permite um número limitado de buscas autenticadas por minuto, e cada sync usa duas. Quando o limite é atingido, o sync falha e o dashboard mostra quando tentar de novo.</li>
+  <li><strong>Limite de buscas.</strong> O GitHub permite um número limitado de buscas autenticadas por minuto, e cada sync usa pelo menos duas (uma por card, mais uma por página extra de 100 resultados). Quando o limite é atingido, o sync falha e o dashboard mostra quando tentar de novo.</li>
 </ul>
 
 <h2 id="troubleshooting">Solução de problemas</h2>
@@ -103,7 +103,7 @@
 <h3 id="refused">O GitHub recusou o token ou a busca</h3>
 <p>Confira se o token não expirou, se os repositórios estão no acesso dele e se ele tem <strong>Pull requests: Read-only</strong>. Se o resource owner for uma organização que exige aprovação, o token fica pendente e só lê recursos públicos até alguém dono da organização aprová-lo. Organizações com SAML single sign-on também exigem que você autorize o token.</p>
 <h3 id="missing-prs">Algumas pull requests não aparecem</h3>
-<p>Confira o acesso a repositórios e o resource owner do token, e o limite de 100 resultados descrito acima.</p>
+<p>Confira o acesso a repositórios e o resource owner do token, e o limite de resultados descrito acima.</p>
       <nav class="page-actions" aria-label="Guias relacionados"><a href="/pt/guide/accounts/">← Contas</a><a href="/pt/guide/mcp/">MCP →</a></nav>
     </article>
   </div>

@@ -38,6 +38,7 @@ interface GithubSearchItem {
 }
 
 interface GithubSearchResponse {
+  total_count?: unknown;
   incomplete_results?: unknown;
   items?: unknown;
 }
@@ -49,6 +50,9 @@ export type StartGithubSyncResult =
   | { kind: "no_token"; hint: string }
   | { kind: "error" }
   | { kind: "started"; runId: string; token: string };
+
+const searchPageSize = 100;
+const searchResultLimit = 1000;
 
 const queries: Record<GithubPrRole, string> = {
   review: "is:pr is:open archived:false review-requested:@me",
@@ -151,10 +155,32 @@ function missingTokenHint(resolution: TokenResolution): string {
   return "Autentique o GitHub CLI com `gh auth login` ou defina DRIZZA_GITHUB_TOKEN com um PAT fine-grained.";
 }
 
+interface GithubSearchPage {
+  items: GithubPrRecord[];
+  incomplete: boolean;
+  totalCount: number;
+  pageLength: number;
+}
+
 async function searchPullRequests(token: string, role: GithubPrRole): Promise<GithubPrSearchResult> {
+  const byId = new Map<number, GithubPrRecord>();
+  let incomplete = false;
+
+  for (let page = 1; page * searchPageSize <= searchResultLimit; page += 1) {
+    const result = await searchPullRequestPage(token, role, page);
+    for (const item of result.items) byId.set(item.id, item);
+    incomplete ||= result.incomplete || result.totalCount > searchResultLimit;
+    if (result.pageLength < searchPageSize || page * searchPageSize >= result.totalCount) break;
+  }
+
+  return { items: [...byId.values()], incomplete };
+}
+
+async function searchPullRequestPage(token: string, role: GithubPrRole, page: number): Promise<GithubSearchPage> {
   const url = new URL("https://api.github.com/search/issues");
   url.searchParams.set("q", queries[role]);
-  url.searchParams.set("per_page", "100");
+  url.searchParams.set("per_page", String(searchPageSize));
+  url.searchParams.set("page", String(page));
 
   let response: Response;
 
@@ -201,7 +227,11 @@ async function searchPullRequests(token: string, role: GithubPrRole): Promise<Gi
     throw new GithubSyncError("O GitHub retornou uma resposta inválida. Tente novamente.");
   }
 
-  if (typeof payload.incomplete_results !== "boolean" || !Array.isArray(payload.items)) {
+  if (
+    typeof payload.incomplete_results !== "boolean"
+    || !Array.isArray(payload.items)
+    || !Number.isSafeInteger(payload.total_count)
+  ) {
     throw new GithubSyncError("O GitHub retornou uma resposta inválida. Tente novamente.");
   }
 
@@ -212,7 +242,12 @@ async function searchPullRequests(token: string, role: GithubPrRole): Promise<Gi
     items.push(record);
   }
 
-  return { items, incomplete: payload.incomplete_results === true };
+  return {
+    items,
+    incomplete: payload.incomplete_results === true,
+    totalCount: payload.total_count as number,
+    pageLength: payload.items.length,
+  };
 }
 
 function toGithubPrRecord(item: GithubSearchItem, role: GithubPrRole): GithubPrRecord | null {

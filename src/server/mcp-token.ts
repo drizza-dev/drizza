@@ -24,6 +24,12 @@ export function ensureMcpToken(tokenPath: string): string {
     throw new Error(`O token do MCP em ${tokenPath} não é um arquivo comum. Apague-o para gerar outro.`);
   }
 
+  if (typeof process.getuid === "function" && stats.uid !== process.getuid()) {
+    throw new Error(
+      `O arquivo do token do MCP em ${tokenPath} pertence a outro usuário. Apague-o para gerar outro.`,
+    );
+  }
+
   if ((stats.mode & 0o077) !== 0) {
     throw new Error(
       `O arquivo do token do MCP em ${tokenPath} pode ser lido por outros usuários. Rode chmod 600 nele ou apague-o para gerar outro.`,

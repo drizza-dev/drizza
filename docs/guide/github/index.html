@@ -87,10 +87,10 @@
 
 <h2 id="limits">Known limits</h2>
 <ul>
-  <li><strong>100 pull requests per card.</strong> Each search reads a single page of up to 100 results, so a card shows at most 100 pull requests. Results beyond that are dropped without a warning in the dashboard.</li>
+  <li><strong>1,000 pull requests per card.</strong> Each search reads pages of 100 results until it has them all, up to the 1,000 results the GitHub search API returns. Beyond that, the dashboard shows a partial sync. Drizza 0.1.0 reads a single page, so a card shows at most 100 pull requests there.</li>
   <li><strong>Partial results.</strong> When GitHub reports that a search timed out (<code class="inline-code">incomplete_results</code>), Drizza keeps the previous cache for that card and the dashboard shows a partial sync.</li>
   <li><strong>One owner per personal access token.</strong> A fine-grained token only reaches private resources of its resource owner. Private pull requests from other owners do not appear. The GitHub CLI token does not have this limit.</li>
-  <li><strong>Search rate limit.</strong> GitHub allows a limited number of authenticated search requests per minute, and each sync uses two. When the limit is reached, the sync fails and the dashboard shows when to try again.</li>
+  <li><strong>Search rate limit.</strong> GitHub allows a limited number of authenticated search requests per minute, and each sync uses at least two (one per card, plus one per extra page of 100 results). When the limit is reached, the sync fails and the dashboard shows when to try again.</li>
 </ul>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -103,7 +103,7 @@
 <h3 id="refused">GitHub refused the token or the search</h3>
 <p>Check that the token has not expired, that the repositories are in its repository access, and that it has <strong>Pull requests: Read-only</strong>. If the resource owner is an organization that requires approval, the token stays pending and can only read public resources until an organization owner approves it. Organizations that use SAML single sign-on also require you to authorize the token.</p>
 <h3 id="missing-prs">Some pull requests are missing</h3>
-<p>Check the repository access and resource owner of the token, and the 100-result limit above.</p>
+<p>Check the repository access and resource owner of the token, and the result limit above.</p>
       <nav class="page-actions" aria-label="Adjacent guides"><a href="/guide/accounts/">← Accounts</a><a href="/guide/mcp/">MCP →</a></nav>
     </article>
   </div>
